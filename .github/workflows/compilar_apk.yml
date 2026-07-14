@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
       - name: Clonar el repositorio
@@ -77,11 +81,9 @@ jobs:
           fi
 
       - name: Preparar keystore (si está en secretos)
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
       - name: Compilar Release (firmado si hay secretos)
         run: |
@@ -93,7 +95,7 @@ jobs:
 
           if [ -f release.keystore ]; then
             echo "Ejecutando build firmado..."
-            $GRADLE_CMD :app:assembleRelease -Pandroid.injected.signing.store.file=release.keystore -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" --no-daemon --stacktrace
+            $GRADLE_CMD :app:assembleRelease -Pandroid.injected.signing.store.file=release.keystore -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" -Pandroid.injected.signing.key.alias="$KEY_ALIAS" -Pandroid.injected.signing.key.password="$KEY_PASSWORD" --no-daemon --stacktrace
           else
             echo "Ejecutando build release (sin firma)..."
             $GRADLE_CMD :app:assembleRelease --no-daemon --stacktrace

@@ -79,3 +79,18 @@ Al finalizar el workflow, descarga el artifact `app-release-apk` desde la secci�
 - Añadir los secretos en GitHub si quieres builds firmados
 
 Si quieres, genero los comandos exactos para crear el wrapper en Windows o Linux y los pasos para configurar los secretos en GitHub GUI.
+
+---
+
+## Instalar y commitear el Gradle Wrapper oficial (recomendado)
+Para garantizar builds reproducibles en CI, crea y commitea el Gradle Wrapper oficial desde tu máquina local:
+
+```bash
+# desde la raíz del proyecto
+./gradlew wrapper --gradle-version 8.5.1
+git add gradlew gradlew.bat gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.jar
+git commit -m "Add Gradle wrapper"
+git push
+```
+
+Nota: `gradle-wrapper.jar` se genera automáticamente cuando ejecutas el comando. No subas tus keystores ni secretos.
