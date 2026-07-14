@@ -16,7 +16,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class ProductRepository(context: Context) {
     private val appContext = context.applicationContext
     private val database = Room.databaseBuilder(appContext, AppDatabase::class.java, "calculadora_precios_db")
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .fallbackToDestructiveMigration()
         .build()
     private val dao = database.productDao()

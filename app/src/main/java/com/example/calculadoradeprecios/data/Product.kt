@@ -12,6 +12,7 @@ data class Product(
     val modelo: String,
     val tipo: String,
     val precioUsd: Double,
+    val isActive: Boolean = true,
     val imageUrl: String = "",
     val garantia: String = "",
     val colores: String = "",        // Almacenado como lista separada por comas

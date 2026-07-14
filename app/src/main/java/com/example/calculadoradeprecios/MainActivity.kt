@@ -30,12 +30,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -206,7 +210,11 @@ fun CalculatorScreen(
     onExchangeRateChange: (Double) -> Unit,
     onSearchQueryChange: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val format = remember { createDecimalFormat() }
+    var selectionMode by rememberSaveable { mutableStateOf(false) }
+    var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
+    val visibleProducts = products.filter { it.isActive }
 
     Column(
         modifier = Modifier
@@ -218,8 +226,44 @@ fun CalculatorScreen(
         CurrencyRateInput(rate = exchangeRate, onRateChange = onExchangeRateChange)
         Spacer(modifier = Modifier.size(12.dp))
         SearchField(value = searchQuery, onValueChange = onSearchQueryChange)
+        Spacer(modifier = Modifier.size(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (selectionMode) "Selecciona productos" else "Productos activos",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (selectionMode) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (selectedIds.isNotEmpty()) {
+                        Button(onClick = {
+                            val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
+                            if (selectedProducts.isNotEmpty()) {
+                                shareProducts(context, selectedProducts, exchangeRate, format)
+                            }
+                        }) {
+                            Text("Compartir (${selectedIds.size})")
+                        }
+                    }
+                    TextButton(onClick = {
+                        selectionMode = false
+                        selectedIds = emptySet()
+                    }) {
+                        Text("Cancelar")
+                    }
+                }
+            } else {
+                TextButton(onClick = { selectionMode = true }) {
+                    Text("Seleccionar")
+                }
+            }
+        }
         Spacer(modifier = Modifier.size(12.dp))
-        if (products.isEmpty()) {
+        if (visibleProducts.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "No hay productos. Agrégalos en la pestaña Administración.",
@@ -229,8 +273,21 @@ fun CalculatorScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(products) { product ->
-                    ProductCard(product = product, exchangeRate = exchangeRate, format = format)
+                items(visibleProducts) { product ->
+                    ProductCard(
+                        product = product,
+                        exchangeRate = exchangeRate,
+                        format = format,
+                        selectionMode = selectionMode,
+                        isSelected = selectedIds.contains(product.id),
+                        onToggleSelection = {
+                            selectedIds = if (selectedIds.contains(product.id)) {
+                                selectedIds - product.id
+                            } else {
+                                selectedIds + product.id
+                            }
+                        }
+                    )
                     Spacer(modifier = Modifier.size(10.dp))
                 }
             }
@@ -436,7 +493,8 @@ fun ManagementScreen(
                         imageUri = product.imageUrl; garantia = product.garantia
                         colores = product.colores; infoAdicional = product.infoAdicional
                     },
-                    onDelete = { onDeleteProduct(product) }
+                    onDelete = { onDeleteProduct(product) },
+                    onToggleActive = { onSaveProduct(product.copy(isActive = !product.isActive)) }
                 )
             }
         }
@@ -482,7 +540,10 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
 fun ProductCard(
     product: com.example.calculadoradeprecios.data.Product,
     exchangeRate: Double,
-    format: DecimalFormat
+    format: DecimalFormat,
+    selectionMode: Boolean,
+    isSelected: Boolean,
+    onToggleSelection: () -> Unit
 ) {
     val context = LocalContext.current
     val precioCup = product.precioUsd * exchangeRate
@@ -536,53 +597,30 @@ fun ProductCard(
                         )
                     }
 
-                    // -------- Botón Compartir WhatsApp --------
-                    IconButton(
-                        onClick = {
-                            val nombreCompleto = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
-
-                            val mensaje = buildShareMessage(product, format, precioCup)
-
-                            val imageContentUri = if (product.imageUrl.isNotBlank())
-                                Uri.parse(product.imageUrl) else null
-
-                            if (imageContentUri != null) {
-                                // Compartir imagen + texto directamente a WhatsApp
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "image/*"
-                                    putExtra(Intent.EXTRA_TEXT, mensaje)
-                                    putExtra(Intent.EXTRA_STREAM, imageContentUri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    // Intentar abrir WhatsApp directamente
-                                    setPackage("com.whatsapp")
-                                }
-                                // Si WhatsApp no está instalado, abrir chooser genérico
-                                if (intent.resolveActivity(context.packageManager) != null) {
-                                    context.startActivity(intent)
-                                } else {
-                                    // Fallback: WhatsApp Business
-                                    intent.setPackage("com.whatsapp.w4b")
-                                    if (intent.resolveActivity(context.packageManager) != null) {
-                                        context.startActivity(intent)
-                                    } else {
-                                        // Fallback final: chooser del sistema
-                                        context.startActivity(Intent.createChooser(intent.apply { setPackage(null) }, "Compartir producto"))
-                                    }
-                                }
-                            } else {
-                                // Sin imagen: abrir WhatsApp con solo texto via wa.me
+                    if (selectionMode) {
+                        IconButton(onClick = onToggleSelection) {
+                            Icon(
+                                imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                                contentDescription = if (isSelected) "Seleccionado" else "No seleccionado",
+                                tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = {
+                                val mensaje = buildShareMessage(product, format, precioCup)
                                 val intent = Intent(Intent.ACTION_VIEW).apply {
                                     data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
                                 }
                                 context.startActivity(intent)
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Compartir en WhatsApp",
+                                tint = Color(0xFF25D366)
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Compartir en WhatsApp",
-                            tint = Color(0xFF25D366)
-                        )
                     }
                 }
 
@@ -809,7 +847,8 @@ fun FormField(
 fun ProductManagementItem(
     product: com.example.calculadoradeprecios.data.Product,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onToggleActive: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -849,6 +888,11 @@ fun ProductManagementItem(
                 Spacer(modifier = Modifier.size(2.dp))
                 Spacer(modifier = Modifier.size(4.dp))
                 Text(
+                    text = if (product.isActive) "Estado: activo" else "Estado: desactivado",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (product.isActive) MaterialTheme.colorScheme.primary else Color.Gray
+                )
+                Text(
                     text = "Precio: ${product.precioUsd} USD",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold
@@ -862,6 +906,13 @@ fun ProductManagementItem(
                 }
             }
             Row {
+                IconButton(onClick = onToggleActive) {
+                    Icon(
+                        imageVector = if (product.isActive) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (product.isActive) "Desactivar" else "Activar",
+                        tint = if (product.isActive) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+                    )
+                }
                 IconButton(onClick = onEdit) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -900,6 +951,17 @@ fun createDecimalFormat(): DecimalFormat {
         decimalSeparator = '.'
     }
     return DecimalFormat("#,##0.00", symbols)
+}
+
+fun shareProducts(context: android.content.Context, products: List<com.example.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
+    val mensaje = products.joinToString("\n\n") { product ->
+        val precioCup = product.precioUsd * exchangeRate
+        buildShareMessage(product, format, precioCup)
+    }
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+    }
+    context.startActivity(intent)
 }
 
 // ---------- Preview ----------
