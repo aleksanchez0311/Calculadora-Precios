@@ -84,12 +84,33 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
     val products by viewModel.products.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    MaterialTheme {
+    val LightColors = androidx.compose.material3.lightColorScheme(
+        primary = androidx.compose.ui.graphics.Color(0xFF0D47A1),
+        onPrimary = androidx.compose.ui.graphics.Color.White,
+        primaryContainer = androidx.compose.ui.graphics.Color(0xFFE3F2FD),
+        onPrimaryContainer = androidx.compose.ui.graphics.Color(0xFF001D35),
+        secondary = androidx.compose.ui.graphics.Color(0xFF1976D2),
+        onSecondary = androidx.compose.ui.graphics.Color.White,
+        background = androidx.compose.ui.graphics.Color(0xFFF8F9FA),
+        surface = androidx.compose.ui.graphics.Color.White,
+        onSurface = androidx.compose.ui.graphics.Color(0xFF1A1C1E)
+    )
+
+    MaterialTheme(colorScheme = LightColors) {
         Scaffold(
-            topBar = { TopAppBar(title = { Text("Calculadora de Precios") }) },
+            topBar = { TopAppBar(
+                title = { Text("Calculadora de Precios", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) },
             bottomBar = { BottomNavigationBar(navController) }
         ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
+            Box(modifier = Modifier
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+            ) {
                 NavHost(navController = navController, startDestination = Screen.Calculator.route) {
                     composable(Screen.Calculator.route) {
                         CalculatorScreen(
@@ -309,13 +330,21 @@ fun ProductList(products: List<com.example.calculadoradeprecios.data.Product>, e
 
 @Composable
 fun ProductCard(product: com.example.calculadoradeprecios.data.Product, exchangeRate: Double, format: DecimalFormat) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "${product.marca} ${product.modelo} - ${product.tipo}", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(text = "SKU: ${product.sku}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Precio USD: ${format.format(product.precioUsd)} USD", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Precio CUP: ${format.format(product.precioUsd * exchangeRate)} CUP", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(text = "${product.marca} ${product.modelo} - ${product.tipo}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Spacer(modifier = Modifier.size(4.dp))
+            Text(text = "SKU: ${product.sku}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+            Spacer(modifier = Modifier.size(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "USD: $${format.format(product.precioUsd)}", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "CUP: $${format.format(product.precioUsd * exchangeRate)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            }
         }
     }
 }
@@ -412,7 +441,10 @@ fun ProductManagementItem(
 ) {
     Card(modifier = Modifier
         .fillMaxWidth()
-        .padding(vertical = 4.dp)
+        .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(modifier = Modifier
             .fillMaxWidth()
@@ -421,16 +453,18 @@ fun ProductManagementItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "${product.equipo} ${product.marca} ${product.modelo}", style = MaterialTheme.typography.titleMedium)
-                Text(text = "${product.tipo} • ${product.sku}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${product.precioUsd} USD", style = MaterialTheme.typography.bodySmall)
+                Text(text = "${product.equipo} ${product.marca} ${product.modelo}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(text = "${product.tipo} • SKU: ${product.sku}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.Gray)
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(text = "Precio: $${product.precioUsd} USD", style = MaterialTheme.typography.bodyLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
             }
             Row {
                 IconButton(onClick = onEdit) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar")
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.secondary)
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar")
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
