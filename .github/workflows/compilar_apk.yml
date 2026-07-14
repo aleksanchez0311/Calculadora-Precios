@@ -1,9 +1,10 @@
-name: Compilar APK de Android
+name: Compilar APK Release de Android
 
 on:
   push:
-    branches: [ "main", "master" ] # Se ejecuta al subir cambios a estas ramas
-  workflow_dispatch: # Te permite activar la compilación manualmente con un botón
+    branches: [ "main", "master" ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -54,35 +55,52 @@ jobs:
           yes | $SDKMANAGER --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           yes | $SDKMANAGER --sdk_root=$ANDROID_SDK_ROOT --licenses || true
 
-      - name: Asegurar permiso en wrapper y ejecutar build
+      - name: Preparar Gradle wrapper o instalar Gradle temporalmente
         run: |
           if [ -f ./gradlew ]; then
             chmod +x ./gradlew
-            ./gradlew :app:assembleDebug --no-daemon --stacktrace
           else
-            echo "Gradle wrapper no encontrado. Descargando Gradle moderno y ejecutando build..."
+            echo "Gradle wrapper no encontrado. Descargando Gradle para usarlo temporalmente..."
             GRADLE_VERSION=8.5.1
             DOWNLOAD_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
-            echo "Descargando $DOWNLOAD_URL"
             curl -fSL --retry 5 --retry-delay 5 -o /tmp/gradle.zip "$DOWNLOAD_URL" || true
             if [ ! -s /tmp/gradle.zip ]; then
-              echo "Descarga fallida o archivo vacío: /tmp/gradle.zip"
-              echo "Intentando instalar gradle vía apt como fallback..."
+              echo "Descarga fallida: intentando instalar gradle vía apt como fallback..."
               sudo apt-get update
               sudo apt-get install -y gradle
               gradle -v
-              gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
             else
-              set -e
               unzip -q /tmp/gradle.zip -d /tmp/
               export PATH=/tmp/gradle-${GRADLE_VERSION}/bin:$PATH
               gradle -v
-              gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
             fi
           fi
 
-      - name: Subir APK generado
+      - name: Preparar keystore (si está en secretos)
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: Compilar Release (firmado si hay secretos)
+        run: |
+          if [ -f ./gradlew ]; then
+            GRADLE_CMD="./gradlew"
+          else
+            GRADLE_CMD="gradle"
+          fi
+
+          if [ -f release.keystore ]; then
+            echo "Ejecutando build firmado..."
+            $GRADLE_CMD :app:assembleRelease -Pandroid.injected.signing.store.file=release.keystore -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" --no-daemon --stacktrace
+          else
+            echo "Ejecutando build release (sin firma)..."
+            $GRADLE_CMD :app:assembleRelease --no-daemon --stacktrace
+          fi
+
+      - name: Subir APK Release
         uses: actions/upload-artifact@v4
         with:
-          name: apk-animado
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
