@@ -3,10 +3,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <queries>
+        <!-- WhatsApp: abrir chat con texto (wa.me) -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" android:host="wa.me" />
         </intent>
+        <!-- WhatsApp: compartir imagen + texto -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
     </queries>
 
     <application

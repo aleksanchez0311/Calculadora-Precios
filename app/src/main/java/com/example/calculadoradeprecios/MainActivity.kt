@@ -5,8 +5,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +21,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
@@ -120,9 +124,7 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        Text("Calculadora de Precios", fontWeight = FontWeight.Bold)
-                    },
+                    title = { Text("Calculadora de Precios", fontWeight = FontWeight.Bold) },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -240,6 +242,8 @@ fun ManagementScreen(
     onSaveProduct: (com.example.calculadoradeprecios.data.Product) -> Unit,
     onDeleteProduct: (com.example.calculadoradeprecios.data.Product) -> Unit
 ) {
+    val context = LocalContext.current
+
     var currentProduct by remember { mutableStateOf<com.example.calculadoradeprecios.data.Product?>(null) }
     var sku by rememberSaveable { mutableStateOf("") }
     var equipo by rememberSaveable { mutableStateOf("") }
@@ -247,16 +251,32 @@ fun ManagementScreen(
     var modelo by rememberSaveable { mutableStateOf("") }
     var tipo by rememberSaveable { mutableStateOf("") }
     var precioUsdText by rememberSaveable { mutableStateOf("") }
-    var imageUrl by rememberSaveable { mutableStateOf("") }
+    var imageUri by rememberSaveable { mutableStateOf("") }
     var garantia by rememberSaveable { mutableStateOf("") }
     var colores by rememberSaveable { mutableStateOf("") }
     var infoAdicional by rememberSaveable { mutableStateOf("") }
     var errorMessage by rememberSaveable { mutableStateOf("") }
 
+    // Selector de imagen de la galería
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Persistir permiso de lectura para que el URI siga siendo válido tras reiniciar la app
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { /* No todos los URIs soportan persistencia */ }
+            imageUri = it.toString()
+        }
+    }
+
     fun resetForm() {
         currentProduct = null
         sku = ""; equipo = ""; marca = ""; modelo = ""; tipo = ""
-        precioUsdText = ""; imageUrl = ""; garantia = ""; colores = ""; infoAdicional = ""
+        precioUsdText = ""; imageUri = ""; garantia = ""; colores = ""; infoAdicional = ""
         errorMessage = ""
     }
 
@@ -279,7 +299,7 @@ fun ManagementScreen(
                     modelo = modelo,
                     tipo = tipo,
                     precioUsdText = precioUsdText,
-                    imageUrl = imageUrl,
+                    imageUri = imageUri,
                     garantia = garantia,
                     colores = colores,
                     infoAdicional = infoAdicional,
@@ -290,7 +310,12 @@ fun ManagementScreen(
                     onModeloChange = { modelo = it },
                     onTipoChange = { tipo = it },
                     onPrecioUsdChange = { precioUsdText = it },
-                    onImageUrlChange = { imageUrl = it },
+                    onPickImage = {
+                        imagePickerLauncher.launch(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
+                    },
+                    onClearImage = { imageUri = "" },
                     onGarantiaChange = { garantia = it },
                     onColoresChange = { colores = it },
                     onInfoAdicionalChange = { infoAdicional = it },
@@ -301,11 +326,11 @@ fun ManagementScreen(
                         } else {
                             val product = currentProduct?.copy(
                                 sku = sku, equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUrl,
+                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                 garantia = garantia, colores = colores, infoAdicional = infoAdicional
                             ) ?: com.example.calculadoradeprecios.data.Product(
                                 sku = sku, equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUrl,
+                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                 garantia = garantia, colores = colores, infoAdicional = infoAdicional
                             )
                             onSaveProduct(product)
@@ -331,7 +356,7 @@ fun ManagementScreen(
                         sku = product.sku; equipo = product.equipo; marca = product.marca
                         modelo = product.modelo; tipo = product.tipo
                         precioUsdText = product.precioUsd.toString()
-                        imageUrl = product.imageUrl; garantia = product.garantia
+                        imageUri = product.imageUrl; garantia = product.garantia
                         colores = product.colores; infoAdicional = product.infoAdicional
                     },
                     onDelete = { onDeleteProduct(product) }
@@ -354,7 +379,10 @@ fun CurrencyRateInput(rate: Double, onRateChange: (Double) -> Unit) {
             newValue.replace(',', '.').toDoubleOrNull()?.let(onRateChange)
         },
         label = { Text("Tasa de cambio") },
-        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done
+        ),
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -389,10 +417,10 @@ fun ProductCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
-            // Imagen del producto
+            // Imagen local del producto (content:// URI o vacío)
             if (product.imageUrl.isNotBlank()) {
                 AsyncImage(
-                    model = product.imageUrl,
+                    model = Uri.parse(product.imageUrl),
                     contentDescription = "Imagen de ${product.modelo}",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -403,7 +431,6 @@ fun ProductCard(
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                // Nombre y tipo
                 Text(
                     text = "${product.equipo} ${product.marca} ${product.modelo}",
                     style = MaterialTheme.typography.titleMedium,
@@ -418,7 +445,6 @@ fun ProductCard(
 
                 Spacer(modifier = Modifier.size(12.dp))
 
-                // Precios en fila
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -437,7 +463,8 @@ fun ProductCard(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    // Botón compartir
+
+                    // -------- Botón Compartir WhatsApp --------
                     IconButton(
                         onClick = {
                             val coloresList = if (product.colores.isNotBlank())
@@ -456,17 +483,42 @@ fun ProductCard(
                                 if (product.garantia.isNotBlank()) {
                                     appendLine("📝 Garantía: ${product.garantia}")
                                 }
-                                appendLine("🌈 Colores: $coloresList")
-                                if (product.imageUrl.isNotBlank()) {
-                                    appendLine()
-                                    append(product.imageUrl)
-                                }
+                                append("🌈 Colores: $coloresList")
                             }
 
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+                            val imageContentUri = if (product.imageUrl.isNotBlank())
+                                Uri.parse(product.imageUrl) else null
+
+                            if (imageContentUri != null) {
+                                // Compartir imagen + texto directamente a WhatsApp
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "image/*"
+                                    putExtra(Intent.EXTRA_TEXT, mensaje)
+                                    putExtra(Intent.EXTRA_STREAM, imageContentUri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    // Intentar abrir WhatsApp directamente
+                                    setPackage("com.whatsapp")
+                                }
+                                // Si WhatsApp no está instalado, abrir chooser genérico
+                                if (intent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(intent)
+                                } else {
+                                    // Fallback: WhatsApp Business
+                                    intent.setPackage("com.whatsapp.w4b")
+                                    if (intent.resolveActivity(context.packageManager) != null) {
+                                        context.startActivity(intent)
+                                    } else {
+                                        // Fallback final: chooser del sistema
+                                        context.startActivity(Intent.createChooser(intent.apply { setPackage(null) }, "Compartir producto"))
+                                    }
+                                }
+                            } else {
+                                // Sin imagen: abrir WhatsApp con solo texto via wa.me
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+                                }
+                                context.startActivity(intent)
                             }
-                            context.startActivity(intent)
                         }
                     ) {
                         Icon(
@@ -477,7 +529,6 @@ fun ProductCard(
                     }
                 }
 
-                // Info adicional compacta
                 if (product.garantia.isNotBlank() || product.colores.isNotBlank()) {
                     Spacer(modifier = Modifier.size(8.dp))
                     Divider(color = Color(0xFFEEEEEE))
@@ -514,7 +565,7 @@ fun ProductManagementForm(
     modelo: String,
     tipo: String,
     precioUsdText: String,
-    imageUrl: String,
+    imageUri: String,
     garantia: String,
     colores: String,
     infoAdicional: String,
@@ -525,7 +576,8 @@ fun ProductManagementForm(
     onModeloChange: (String) -> Unit,
     onTipoChange: (String) -> Unit,
     onPrecioUsdChange: (String) -> Unit,
-    onImageUrlChange: (String) -> Unit,
+    onPickImage: () -> Unit,
+    onClearImage: () -> Unit,
     onGarantiaChange: (String) -> Unit,
     onColoresChange: (String) -> Unit,
     onInfoAdicionalChange: (String) -> Unit,
@@ -558,10 +610,69 @@ fun ProductManagementForm(
 
             Spacer(modifier = Modifier.size(4.dp))
             Divider(color = Color(0xFFEEEEEE))
-            Spacer(modifier = Modifier.size(4.dp))
+            Spacer(modifier = Modifier.size(12.dp))
+
+            // --- Selector de imagen local ---
+            Text(
+                text = "Imagen del producto",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+
+            if (imageUri.isNotBlank()) {
+                // Vista previa de la imagen seleccionada
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AsyncImage(
+                        model = Uri.parse(imageUri),
+                        contentDescription = "Imagen seleccionada",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, Color(0xFFDDDDDD), RoundedCornerShape(10.dp))
+                    )
+                    // Botón para cambiar imagen
+                    TextButton(
+                        onClick = onClearImage,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Text("Cambiar", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            } else {
+                // Botón para seleccionar imagen
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xFFBBBBBB), RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                        .clickable { onPickImage() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.AddPhotoAlternate,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = "Toca para seleccionar una foto",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.size(12.dp))
 
             // --- Campos adicionales ---
-            FormField(value = imageUrl, onValueChange = onImageUrlChange, label = "URL de imagen")
             FormField(value = garantia, onValueChange = onGarantiaChange, label = "Garantía (ej: 12 meses)")
             FormField(
                 value = colores,
@@ -656,6 +767,19 @@ fun ProductManagementItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Miniatura de imagen si existe
+            if (product.imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = Uri.parse(product.imageUrl),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.size(12.dp))
+            }
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${product.equipo} ${product.marca} ${product.modelo}",
