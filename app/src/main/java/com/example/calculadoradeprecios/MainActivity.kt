@@ -298,7 +298,7 @@ fun CalculatorScreen(
                 onClick = {
                     val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
                     if (selectedProducts.isNotEmpty()) {
-                        shareProducts(context, selectedProducts, exchangeRate, format)
+                        shareProductsIndividually(context, selectedProducts, exchangeRate, format)
                     }
                 },
                 containerColor = Color(0xFF25D366),
@@ -1024,15 +1024,15 @@ fun createDecimalFormat(): DecimalFormat {
     return DecimalFormat("#,##0.00", symbols)
 }
 
-fun shareProducts(context: android.content.Context, products: List<com.example.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
-    val mensaje = products.joinToString("\n\n") { product ->
+fun shareProductsIndividually(context: android.content.Context, products: List<com.example.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
+    products.forEach { product ->
         val precioCup = product.precioUsd * exchangeRate
-        buildShareMessage(product, format, precioCup)
+        val mensaje = buildShareMessage(product, format, precioCup)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+        }
+        context.startActivity(intent)
     }
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
-    }
-    context.startActivity(intent)
 }
 
 // ---------- Preview ----------
