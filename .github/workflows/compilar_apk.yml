@@ -1,0 +1,33 @@
+name: Compilar APK de Android
+
+on:
+  push:
+    branches: [ "main", "master" ] # Se ejecuta al subir cambios a estas ramas
+  workflow_dispatch: # Te permite activar la compilación manualmente con un botón
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clonar el repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar Java JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Dar permisos de ejecución a Gradle
+      run: chmod +x ./gradlew
+
+    - name: Compilar APK (Modo Debug)
+      run: ./gradlew assembleDebug
+
+    - name: Subir APK generado
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk-animado
+        path: app/build/outputs/apk/debug/*.apk
