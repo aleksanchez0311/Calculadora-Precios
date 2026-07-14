@@ -16,7 +16,7 @@ fun buildShareMessage(product: Product, format: DecimalFormat, precioCup: Double
     } else null
 
     return buildString {
-        appendLine("(✅ $nombreCompleto)")
+        appendLine("✅ $nombreCompleto")
         if (product.infoAdicional.isNotBlank()) {
             appendLine("(${product.infoAdicional.trim()})")
         }
