@@ -7,6 +7,7 @@ Aplicación de Android desarrollada en Kotlin que permite realizar cálculos de 
 - Gestión fácil de márgenes de ganancia.
 - Interfaz intuitiva y moderna.
 
+
 ## Requisitos
 - Android Studio Ladybug (o superior).
 - JDK 17 o superior.
