@@ -60,9 +60,11 @@ jobs:
             chmod +x ./gradlew
             ./gradlew :app:assembleDebug --no-daemon --stacktrace
           else
-            echo "Gradle wrapper no encontrado. Instalando gradle vía apt y ejecutando build..."
-            sudo apt-get update
-            sudo apt-get install -y gradle
+            echo "Gradle wrapper no encontrado. Descargando Gradle moderno y ejecutando build..."
+            GRADLE_VERSION=8.5.1
+            wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -O /tmp/gradle.zip
+            unzip -q /tmp/gradle.zip -d /tmp/
+            export PATH=/tmp/gradle-${GRADLE_VERSION}/bin:$PATH
             gradle -v
             gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
           fi
