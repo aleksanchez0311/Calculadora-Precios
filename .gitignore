@@ -1,47 +1,28 @@
-# Gradle
-/.gradle
-/build/
-**/build/
-
-# Gradle wrapper
-gradle/wrapper/gradle-wrapper.jar
-
-# Local configuration
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
 local.properties
 
-# Android Studio / IntelliJ
-.idea/
-*.iml
-*.iws
+# Kotlin
+*.kotlin_module
 
-# Keystore and sensitive files
+# Google Services
+google-services.json
+
+# Keystore
 *.jks
 *.keystore
-release.keystore
 
-# Generated APKs and other outputs
-*.apk
-/app/build/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# VS Code
-.vscode/
-
-# Kotlin/Java
-out/
-
-# Misc
-captures/
-.externalNativeBuild/
-
-# Ignore any files created by CI that should not be committed
-ci-output/
-
-# Keep gradle.properties and settings if needed, but ignore local overrides
-gradle.properties.local
+# Build files
+**/build/
