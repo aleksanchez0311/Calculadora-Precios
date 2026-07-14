@@ -67,9 +67,13 @@ jobs:
             echo "Gradle wrapper no encontrado. Descargando Gradle para usarlo temporalmente..."
             GRADLE_VERSION=8.5.1
             DOWNLOAD_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
-            curl -fSL --retry 5 --retry-delay 5 -o /tmp/gradle.zip "$DOWNLOAD_URL" || true
-            if [ ! -s /tmp/gradle.zip ]; then
-              echo "Descarga fallida: intentando instalar gradle vía apt como fallback..."
+            set +e
+            curl -fSL --retry 5 --retry-delay 5 -o /tmp/gradle.zip "$DOWNLOAD_URL"
+            CURL_EXIT=$?
+            set -e
+            if [ $CURL_EXIT -ne 0 ] || [ ! -s /tmp/gradle.zip ]; then
+              echo "Descarga fallida o archivo vacío: /tmp/gradle.zip (curl exit=$CURL_EXIT)"
+              echo "Intentando instalar gradle vía apt como fallback..."
               sudo apt-get update
               sudo apt-get install -y gradle
               gradle -v
