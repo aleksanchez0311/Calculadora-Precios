@@ -64,6 +64,10 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes = true
+}
+
 repositories {
     google()
     mavenCentral()
