@@ -60,8 +60,11 @@ jobs:
             chmod +x ./gradlew
             ./gradlew assembleDebug --no-daemon
           else
-            echo "Gradle wrapper no encontrado. Finaliza con error para que haya una acción manual."
-            exit 1
+            echo "Gradle wrapper no encontrado. Instalando gradle vía apt y ejecutando build..."
+            sudo apt-get update
+            sudo apt-get install -y gradle
+            gradle -v
+            gradle assembleDebug --no-daemon || (echo "Gradle build failed"; exit 1)
           fi
 
       - name: Subir APK generado
