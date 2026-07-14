@@ -26,8 +26,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             products
         } else {
             products.filter { product ->
-                product.sku.contains(query, ignoreCase = true) ||
-                    product.equipo.contains(query, ignoreCase = true) ||
+                product.equipo.contains(query, ignoreCase = true) ||
                     product.marca.contains(query, ignoreCase = true) ||
                     product.modelo.contains(query, ignoreCase = true) ||
                     product.tipo.contains(query, ignoreCase = true)

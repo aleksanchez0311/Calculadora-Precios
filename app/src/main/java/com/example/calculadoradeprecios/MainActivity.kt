@@ -4,6 +4,7 @@ package com.example.calculadoradeprecios
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -81,6 +82,8 @@ import coil.compose.AsyncImage
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import org.json.JSONArray
+import org.json.JSONObject
 
 // ---------- Rutas de navegación ----------
 
@@ -246,7 +249,6 @@ fun ManagementScreen(
     val context = LocalContext.current
 
     var currentProduct by remember { mutableStateOf<com.example.calculadoradeprecios.data.Product?>(null) }
-    var sku by rememberSaveable { mutableStateOf("") }
     var equipo by rememberSaveable { mutableStateOf("") }
     var marca by rememberSaveable { mutableStateOf("") }
     var modelo by rememberSaveable { mutableStateOf("") }
@@ -257,6 +259,65 @@ fun ManagementScreen(
     var colores by rememberSaveable { mutableStateOf("") }
     var infoAdicional by rememberSaveable { mutableStateOf("") }
     var errorMessage by rememberSaveable { mutableStateOf("") }
+    var exportMessage by rememberSaveable { mutableStateOf("") }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            val json = JSONObject()
+            val items = JSONArray()
+            products.forEach { product ->
+                val item = JSONObject().apply {
+                    put("equipo", product.equipo)
+                    put("marca", product.marca)
+                    put("modelo", product.modelo)
+                    put("tipo", product.tipo)
+                    put("precioUsd", product.precioUsd)
+                    put("imageUrl", product.imageUrl)
+                    put("garantia", product.garantia)
+                    put("colores", product.colores)
+                    put("infoAdicional", product.infoAdicional)
+                }
+                items.put(item)
+            }
+            json.put("products", items)
+            context.contentResolver.openOutputStream(uri)?.use { output ->
+                output.write(json.toString(2).toByteArray())
+            }
+            exportMessage = "Exportación creada correctamente"
+            Toast.makeText(context, "Archivo de exportación guardado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            val text = context.contentResolver.openInputStream(uri)?.bufferedReader().use { it?.readText() }
+            if (!text.isNullOrBlank()) {
+                val json = JSONObject(text)
+                val items = json.optJSONArray("products") ?: JSONArray()
+                for (i in 0 until items.length()) {
+                    val item = items.getJSONObject(i)
+                    val product = com.example.calculadoradeprecios.data.Product(
+                        equipo = item.optString("equipo", ""),
+                        marca = item.optString("marca", ""),
+                        modelo = item.optString("modelo", ""),
+                        tipo = item.optString("tipo", ""),
+                        precioUsd = item.optDouble("precioUsd", 0.0),
+                        imageUrl = item.optString("imageUrl", ""),
+                        garantia = item.optString("garantia", ""),
+                        colores = item.optString("colores", ""),
+                        infoAdicional = item.optString("infoAdicional", "")
+                    )
+                    onSaveProduct(product)
+                }
+                exportMessage = "Importación completada"
+                Toast.makeText(context, "Productos importados", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // Selector de imagen de la galería
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -276,7 +337,7 @@ fun ManagementScreen(
 
     fun resetForm() {
         currentProduct = null
-        sku = ""; equipo = ""; marca = ""; modelo = ""; tipo = ""
+        equipo = ""; marca = ""; modelo = ""; tipo = ""
         precioUsdText = ""; imageUri = ""; garantia = ""; colores = ""; infoAdicional = ""
         errorMessage = ""
     }
@@ -294,7 +355,6 @@ fun ManagementScreen(
             item {
                 SectionTitle(text = "Administrar productos")
                 ProductManagementForm(
-                    sku = sku,
                     equipo = equipo,
                     marca = marca,
                     modelo = modelo,
@@ -305,7 +365,6 @@ fun ManagementScreen(
                     colores = colores,
                     infoAdicional = infoAdicional,
                     errorMessage = errorMessage,
-                    onSkuChange = { sku = it },
                     onEquipoChange = { equipo = it },
                     onMarcaChange = { marca = it },
                     onModeloChange = { modelo = it },
@@ -322,15 +381,15 @@ fun ManagementScreen(
                     onInfoAdicionalChange = { infoAdicional = it },
                     onSubmit = {
                         val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
-                        if (sku.isBlank() || equipo.isBlank() || marca.isBlank() || modelo.isBlank() || tipo.isBlank() || precioUsd == null) {
-                            errorMessage = "Los campos SKU, Equipo, Marca, Modelo, Tipo y Precio son obligatorios"
+                        if (equipo.isBlank() || precioUsd == null || imageUri.isBlank()) {
+                            errorMessage = "Los campos Equipo, Precio e Imagen son obligatorios"
                         } else {
                             val product = currentProduct?.copy(
-                                sku = sku, equipo = equipo, marca = marca, modelo = modelo,
+                                equipo = equipo, marca = marca, modelo = modelo,
                                 tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                 garantia = garantia, colores = colores, infoAdicional = infoAdicional
                             ) ?: com.example.calculadoradeprecios.data.Product(
-                                sku = sku, equipo = equipo, marca = marca, modelo = modelo,
+                                equipo = equipo, marca = marca, modelo = modelo,
                                 tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                 garantia = garantia, colores = colores, infoAdicional = infoAdicional
                             )
@@ -340,6 +399,23 @@ fun ManagementScreen(
                     },
                     onCancel = { resetForm() }
                 )
+                Spacer(modifier = Modifier.size(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { exportLauncher.launch("productos-export.json") }) {
+                        Text("Exportar JSON")
+                    }
+                    TextButton(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
+                        Text("Importar JSON")
+                    }
+                }
+                if (exportMessage.isNotBlank()) {
+                    Text(
+                        text = exportMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.size(24.dp))
                 Text(
                     text = "Productos guardados (${products.size})",
@@ -354,7 +430,7 @@ fun ManagementScreen(
                     product = product,
                     onEdit = {
                         currentProduct = product
-                        sku = product.sku; equipo = product.equipo; marca = product.marca
+                        equipo = product.equipo; marca = product.marca
                         modelo = product.modelo; tipo = product.tipo
                         precioUsdText = product.precioUsd.toString()
                         imageUri = product.imageUrl; garantia = product.garantia
@@ -433,15 +509,10 @@ fun ProductCard(
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "${product.equipo} ${product.marca} ${product.modelo}",
+                    text = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${product.tipo} • SKU: ${product.sku}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
                 )
 
                 Spacer(modifier = Modifier.size(12.dp))
@@ -468,27 +539,9 @@ fun ProductCard(
                     // -------- Botón Compartir WhatsApp --------
                     IconButton(
                         onClick = {
-                            val nombreCompleto = listOf(product.equipo, product.marca, product.modelo, product.tipo)
-                                .filter { it.isNotBlank() }
-                                .joinToString(" ")
+                            val nombreCompleto = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
 
-                            val coloresList = if (product.colores.isNotBlank())
-                                product.colores.split(",").joinToString(", ") { it.trim() }
-                            else "No especificado"
-
-                            val mensaje = buildString {
-                                appendLine("(✅ $nombreCompleto)")
-                                if (product.infoAdicional.isNotBlank()) {
-                                    appendLine("(${product.infoAdicional.trim()})")
-                                }
-                                appendLine()
-                                appendLine("💰 Precio USD: ${format.format(product.precioUsd)}")
-                                appendLine("💰 Precio CUP: ${format.format(precioCup)}")
-                                if (product.garantia.isNotBlank()) {
-                                    appendLine("📝 Garantia: ${product.garantia}")
-                                }
-                                append("🌈 Colores: $coloresList")
-                            }
+                            val mensaje = buildShareMessage(product, format, precioCup)
 
                             val imageContentUri = if (product.imageUrl.isNotBlank())
                                 Uri.parse(product.imageUrl) else null
@@ -570,7 +623,6 @@ fun ProductCard(
 
 @Composable
 fun ProductManagementForm(
-    sku: String,
     equipo: String,
     marca: String,
     modelo: String,
@@ -581,7 +633,6 @@ fun ProductManagementForm(
     colores: String,
     infoAdicional: String,
     errorMessage: String,
-    onSkuChange: (String) -> Unit,
     onEquipoChange: (String) -> Unit,
     onMarcaChange: (String) -> Unit,
     onModeloChange: (String) -> Unit,
@@ -607,16 +658,28 @@ fun ProductManagementForm(
                 .padding(16.dp)
         ) {
             // --- Campos base ---
-            FormField(value = sku, onValueChange = onSkuChange, label = "SKU *")
             FormField(value = equipo, onValueChange = onEquipoChange, label = "Equipo *")
-            FormField(value = marca, onValueChange = onMarcaChange, label = "Marca *")
-            FormField(value = modelo, onValueChange = onModeloChange, label = "Modelo *")
-            FormField(value = tipo, onValueChange = onTipoChange, label = "Tipo *")
+            FormField(value = marca, onValueChange = onMarcaChange, label = "Marca")
+            FormField(value = modelo, onValueChange = onModeloChange, label = "Modelo")
+            FormField(value = tipo, onValueChange = onTipoChange, label = "Tipo")
             FormField(
                 value = precioUsdText,
                 onValueChange = onPrecioUsdChange,
                 label = "Precio USD *",
                 keyboardType = KeyboardType.Number
+            )
+            FormField(
+                value = infoAdicional,
+                onValueChange = onInfoAdicionalChange,
+                label = "Información adicional",
+                singleLine = false,
+                minLines = 3
+            )
+            FormField(value = garantia, onValueChange = onGarantiaChange, label = "Garantía")
+            FormField(
+                value = colores,
+                onValueChange = onColoresChange,
+                label = "Colores disponibles"
             )
 
             Spacer(modifier = Modifier.size(4.dp))
@@ -682,21 +745,6 @@ fun ProductManagementForm(
             }
 
             Spacer(modifier = Modifier.size(12.dp))
-
-            // --- Campos adicionales ---
-            FormField(value = garantia, onValueChange = onGarantiaChange, label = "Garantía (ej: 12 meses)")
-            FormField(
-                value = colores,
-                onValueChange = onColoresChange,
-                label = "Colores disponibles (separados por coma)"
-            )
-            FormField(
-                value = infoAdicional,
-                onValueChange = onInfoAdicionalChange,
-                label = "Información adicional",
-                singleLine = false,
-                minLines = 3
-            )
 
             if (errorMessage.isNotBlank()) {
                 Text(
@@ -793,17 +841,12 @@ fun ProductManagementItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${product.equipo} ${product.marca} ${product.modelo}",
+                    text = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.size(2.dp))
-                Text(
-                    text = "${product.tipo} • SKU: ${product.sku}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
                 Spacer(modifier = Modifier.size(4.dp))
                 Text(
                     text = "Precio: ${product.precioUsd} USD",
@@ -866,7 +909,7 @@ fun createDecimalFormat(): DecimalFormat {
 fun DefaultPreview() {
     val sampleProducts = listOf(
         com.example.calculadoradeprecios.data.Product(
-            id = 1, sku = "SKU123", equipo = "Teléfono", marca = "Samsung",
+            id = 1, equipo = "Teléfono", marca = "Samsung",
             modelo = "Galaxy S24", tipo = "Alta gama", precioUsd = 650.0,
             garantia = "12 meses", colores = "Negro, Blanco, Azul",
             infoAdicional = "Incluye cargador rápido de 45W", imageUrl = ""
