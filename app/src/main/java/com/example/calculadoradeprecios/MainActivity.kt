@@ -220,53 +220,58 @@ fun ManagementScreen(
 
     Column(modifier = Modifier
         .fillMaxSize()
-        .padding(16.dp)
+        .background(MaterialTheme.colorScheme.background)
     ) {
-        SectionTitle(text = "Administrar productos")
-        ProductManagementForm(
-            sku = sku,
-            equipo = equipo,
-            marca = marca,
-            modelo = modelo,
-            tipo = tipo,
-            precioUsdText = precioUsdText,
-            errorMessage = errorMessage,
-            onSkuChange = { sku = it },
-            onEquipoChange = { equipo = it },
-            onMarcaChange = { marca = it },
-            onModeloChange = { modelo = it },
-            onTipoChange = { tipo = it },
-            onPrecioUsdChange = { precioUsdText = it },
-            onSubmit = {
-                val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
-                if (sku.isBlank() || equipo.isBlank() || marca.isBlank() || modelo.isBlank() || tipo.isBlank() || precioUsd == null) {
-                    errorMessage = "Todos los campos son obligatorios y el precio debe ser válido"
-                } else {
-                    val product = currentProduct?.copy(
-                        sku = sku,
-                        equipo = equipo,
-                        marca = marca,
-                        modelo = modelo,
-                        tipo = tipo,
-                        precioUsd = precioUsd
-                    ) ?: com.example.calculadoradeprecios.data.Product(
-                        sku = sku,
-                        equipo = equipo,
-                        marca = marca,
-                        modelo = modelo,
-                        tipo = tipo,
-                        precioUsd = precioUsd
-                    )
-                    onSaveProduct(product)
-                    resetForm()
-                }
-            },
-            onCancel = { resetForm() }
-        )
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(text = "Productos guardados", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.size(8.dp))
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+        ) {
+            item {
+                SectionTitle(text = "Administrar productos")
+                ProductManagementForm(
+                    sku = sku,
+                    equipo = equipo,
+                    marca = marca,
+                    modelo = modelo,
+                    tipo = tipo,
+                    precioUsdText = precioUsdText,
+                    errorMessage = errorMessage,
+                    onSkuChange = { sku = it },
+                    onEquipoChange = { equipo = it },
+                    onMarcaChange = { marca = it },
+                    onModeloChange = { modelo = it },
+                    onTipoChange = { tipo = it },
+                    onPrecioUsdChange = { precioUsdText = it },
+                    onSubmit = {
+                        val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
+                        if (sku.isBlank() || equipo.isBlank() || marca.isBlank() || modelo.isBlank() || tipo.isBlank() || precioUsd == null) {
+                            errorMessage = "Todos los campos son obligatorios y el precio debe ser válido"
+                        } else {
+                            val product = currentProduct?.copy(
+                                sku = sku,
+                                equipo = equipo,
+                                marca = marca,
+                                modelo = modelo,
+                                tipo = tipo,
+                                precioUsd = precioUsd
+                            ) ?: com.example.calculadoradeprecios.data.Product(
+                                sku = sku,
+                                equipo = equipo,
+                                marca = marca,
+                                modelo = modelo,
+                                tipo = tipo,
+                                precioUsd = precioUsd
+                            )
+                            onSaveProduct(product)
+                            resetForm()
+                        }
+                    },
+                    onCancel = { resetForm() }
+                )
+                Spacer(modifier = Modifier.size(24.dp))
+                Text(text = "Productos guardados", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                Spacer(modifier = Modifier.size(8.dp))
+            }
             items(products) { product ->
                 ProductManagementItem(
                     product = product,
@@ -367,67 +372,73 @@ fun ProductManagementForm(
     onSubmit: () -> Unit,
     onCancel: () -> Unit
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-        .padding(16.dp)
+    Card(modifier = Modifier
+        .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        OutlinedTextField(
-            value = sku,
-            onValueChange = onSkuChange,
-            label = { Text("SKU") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        OutlinedTextField(
-            value = equipo,
-            onValueChange = onEquipoChange,
-            label = { Text("Equipo") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        OutlinedTextField(
-            value = marca,
-            onValueChange = onMarcaChange,
-            label = { Text("Marca") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        OutlinedTextField(
-            value = modelo,
-            onValueChange = onModeloChange,
-            label = { Text("Modelo") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        OutlinedTextField(
-            value = tipo,
-            onValueChange = onTipoChange,
-            label = { Text("Tipo") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-        OutlinedTextField(
-            value = precioUsdText,
-            onValueChange = { newValue ->
-                onPrecioUsdChange(newValue)
-            },
-            label = { Text("Precio USD") },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number, imeAction = ImeAction.Done),
-            modifier = Modifier.fillMaxWidth()
-        )
-        if (errorMessage.isNotBlank()) {
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
-        }
-        Spacer(modifier = Modifier.size(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = onSubmit, modifier = Modifier.weight(1f)) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "Guardar")
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+        ) {
+            OutlinedTextField(
+                value = sku,
+                onValueChange = onSkuChange,
+                label = { Text("SKU") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            OutlinedTextField(
+                value = equipo,
+                onValueChange = onEquipoChange,
+                label = { Text("Equipo") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            OutlinedTextField(
+                value = marca,
+                onValueChange = onMarcaChange,
+                label = { Text("Marca") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            OutlinedTextField(
+                value = modelo,
+                onValueChange = onModeloChange,
+                label = { Text("Modelo") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            OutlinedTextField(
+                value = tipo,
+                onValueChange = onTipoChange,
+                label = { Text("Tipo") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            OutlinedTextField(
+                value = precioUsdText,
+                onValueChange = { newValue ->
+                    onPrecioUsdChange(newValue)
+                },
+                label = { Text("Precio USD") },
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number, imeAction = ImeAction.Done),
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (errorMessage.isNotBlank()) {
+                Text(text = errorMessage, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
             }
-            TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text(text = "Cancelar")
+            Spacer(modifier = Modifier.size(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onSubmit, modifier = Modifier.weight(1f)) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(text = "Guardar", color = MaterialTheme.colorScheme.onPrimary)
+                }
+                TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                    Text(text = "Cancelar", color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
     }
@@ -473,7 +484,7 @@ fun ProductManagementItem(
 
 @Composable
 fun SectionTitle(text: String) {
-    Text(text = text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 8.dp))
+    Text(text = text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp), color = MaterialTheme.colorScheme.onBackground, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
 }
 
 fun createDecimalFormat(): DecimalFormat {
