@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -312,7 +313,7 @@ fun ManagementScreen(
                     onPrecioUsdChange = { precioUsdText = it },
                     onPickImage = {
                         imagePickerLauncher.launch(
-                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
                     onClearImage = { imageUri = "" },
