@@ -467,21 +467,24 @@ fun ProductCard(
                     // -------- Botón Compartir WhatsApp --------
                     IconButton(
                         onClick = {
+                            val nombreCompleto = listOf(product.equipo, product.marca, product.modelo, product.tipo)
+                                .filter { it.isNotBlank() }
+                                .joinToString(" ")
+
                             val coloresList = if (product.colores.isNotBlank())
                                 product.colores.split(",").joinToString(", ") { it.trim() }
                             else "No especificado"
 
                             val mensaje = buildString {
-                                appendLine("✅ ${product.equipo} ${product.marca} ${product.modelo} - ${product.tipo}")
+                                appendLine("(✅ $nombreCompleto)")
                                 if (product.infoAdicional.isNotBlank()) {
-                                    appendLine()
-                                    appendLine(product.infoAdicional)
+                                    appendLine("(${product.infoAdicional.trim()})")
                                 }
                                 appendLine()
-                                appendLine("💰 Precio USD: ${format.format(product.precioUsd)} USD")
-                                appendLine("💰 Precio CUP: ${format.format(precioCup)} CUP")
+                                appendLine("💰 Precio USD: ${format.format(product.precioUsd)}")
+                                appendLine("💰 Precio CUP: ${format.format(precioCup)}")
                                 if (product.garantia.isNotBlank()) {
-                                    appendLine("📝 Garantía: ${product.garantia}")
+                                    appendLine("📝 Garantia: ${product.garantia}")
                                 }
                                 append("🌈 Colores: $coloresList")
                             }
@@ -529,11 +532,11 @@ fun ProductCard(
                     }
                 }
 
-                if (product.garantia.isNotBlank() || product.colores.isNotBlank()) {
+                if (product.garantia.isNotBlank() || product.colores.isNotBlank() || product.infoAdicional.isNotBlank()) {
                     Spacer(modifier = Modifier.size(8.dp))
                     Divider(color = Color(0xFFEEEEEE))
                     Spacer(modifier = Modifier.size(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         if (product.garantia.isNotBlank()) {
                             Text(
                                 text = "📝 ${product.garantia}",
@@ -544,6 +547,13 @@ fun ProductCard(
                         if (product.colores.isNotBlank()) {
                             Text(
                                 text = "🌈 ${product.colores}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+                        if (product.infoAdicional.isNotBlank()) {
+                            Text(
+                                text = "ℹ️ ${product.infoAdicional}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
