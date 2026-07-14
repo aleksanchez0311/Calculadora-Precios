@@ -12,5 +12,9 @@ data class Product(
     val marca: String,
     val modelo: String,
     val tipo: String,
-    val precioUsd: Double
+    val precioUsd: Double,
+    val imageUrl: String = "",
+    val garantia: String = "",
+    val colores: String = "",        // Almacenado como lista separada por comas
+    val infoAdicional: String = ""
 )

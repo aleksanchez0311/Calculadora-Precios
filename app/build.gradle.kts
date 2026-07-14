@@ -16,6 +16,12 @@ android {
         versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf("room.schemaLocation" to "$projectDir/schemas")
+            }
+        }
     }
 
     signingConfigs {
@@ -83,6 +89,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.3")
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.datastore:datastore-preferences:1.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.google.android.material:material:1.11.0")
