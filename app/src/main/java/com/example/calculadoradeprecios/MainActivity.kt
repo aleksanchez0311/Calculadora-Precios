@@ -317,6 +317,7 @@ fun ManagementScreen(
     var infoAdicional by rememberSaveable { mutableStateOf("") }
     var errorMessage by rememberSaveable { mutableStateOf("") }
     var exportMessage by rememberSaveable { mutableStateOf("") }
+    var activeManagementView by rememberSaveable { mutableStateOf("products") }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -326,11 +327,13 @@ fun ManagementScreen(
             val items = JSONArray()
             products.forEach { product ->
                 val item = JSONObject().apply {
+                    put("id", product.id)
                     put("equipo", product.equipo)
                     put("marca", product.marca)
                     put("modelo", product.modelo)
                     put("tipo", product.tipo)
                     put("precioUsd", product.precioUsd)
+                    put("isActive", product.isActive)
                     put("imageUrl", product.imageUrl)
                     put("garantia", product.garantia)
                     put("colores", product.colores)
@@ -358,11 +361,13 @@ fun ManagementScreen(
                 for (i in 0 until items.length()) {
                     val item = items.getJSONObject(i)
                     val product = com.example.calculadoradeprecios.data.Product(
+                        id = item.optLong("id", 0L),
                         equipo = item.optString("equipo", ""),
                         marca = item.optString("marca", ""),
                         modelo = item.optString("modelo", ""),
                         tipo = item.optString("tipo", ""),
                         precioUsd = item.optDouble("precioUsd", 0.0),
+                        isActive = item.optBoolean("isActive", true),
                         imageUrl = item.optString("imageUrl", ""),
                         garantia = item.optString("garantia", ""),
                         colores = item.optString("colores", ""),
@@ -411,91 +416,129 @@ fun ManagementScreen(
         ) {
             item {
                 SectionTitle(text = "Administrar productos")
-                ProductManagementForm(
-                    equipo = equipo,
-                    marca = marca,
-                    modelo = modelo,
-                    tipo = tipo,
-                    precioUsdText = precioUsdText,
-                    imageUri = imageUri,
-                    garantia = garantia,
-                    colores = colores,
-                    infoAdicional = infoAdicional,
-                    errorMessage = errorMessage,
-                    onEquipoChange = { equipo = it },
-                    onMarcaChange = { marca = it },
-                    onModeloChange = { modelo = it },
-                    onTipoChange = { tipo = it },
-                    onPrecioUsdChange = { precioUsdText = it },
-                    onPickImage = {
-                        imagePickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    onClearImage = { imageUri = "" },
-                    onGarantiaChange = { garantia = it },
-                    onColoresChange = { colores = it },
-                    onInfoAdicionalChange = { infoAdicional = it },
-                    onSubmit = {
-                        val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
-                        if (equipo.isBlank() || precioUsd == null || imageUri.isBlank()) {
-                            errorMessage = "Los campos Equipo, Precio e Imagen son obligatorios"
-                        } else {
-                            val product = currentProduct?.copy(
-                                equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
-                                garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                            ) ?: com.example.calculadoradeprecios.data.Product(
-                                equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
-                                garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                            )
-                            onSaveProduct(product)
-                            resetForm()
-                        }
-                    },
-                    onCancel = { resetForm() }
-                )
-                Spacer(modifier = Modifier.size(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { exportLauncher.launch("productos-export.json") }) {
-                        Text("Exportar JSON")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TextButton(onClick = { activeManagementView = "products" }) {
+                        Text("Productos")
                     }
-                    TextButton(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
-                        Text("Importar JSON")
+                    TextButton(onClick = { activeManagementView = "backup" }) {
+                        Text("Respaldo")
                     }
                 }
-                if (exportMessage.isNotBlank()) {
+                Spacer(modifier = Modifier.size(12.dp))
+
+                if (activeManagementView == "products") {
+                    ProductManagementForm(
+                        equipo = equipo,
+                        marca = marca,
+                        modelo = modelo,
+                        tipo = tipo,
+                        precioUsdText = precioUsdText,
+                        imageUri = imageUri,
+                        garantia = garantia,
+                        colores = colores,
+                        infoAdicional = infoAdicional,
+                        errorMessage = errorMessage,
+                        onEquipoChange = { equipo = it },
+                        onMarcaChange = { marca = it },
+                        onModeloChange = { modelo = it },
+                        onTipoChange = { tipo = it },
+                        onPrecioUsdChange = { precioUsdText = it },
+                        onPickImage = {
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onClearImage = { imageUri = "" },
+                        onGarantiaChange = { garantia = it },
+                        onColoresChange = { colores = it },
+                        onInfoAdicionalChange = { infoAdicional = it },
+                        onSubmit = {
+                            val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
+                            if (equipo.isBlank() || precioUsd == null || imageUri.isBlank()) {
+                                errorMessage = "Los campos Equipo, Precio e Imagen son obligatorios"
+                            } else {
+                                val product = currentProduct?.copy(
+                                    equipo = equipo, marca = marca, modelo = modelo,
+                                    tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
+                                    garantia = garantia, colores = colores, infoAdicional = infoAdicional
+                                ) ?: com.example.calculadoradeprecios.data.Product(
+                                    equipo = equipo, marca = marca, modelo = modelo,
+                                    tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
+                                    garantia = garantia, colores = colores, infoAdicional = infoAdicional
+                                )
+                                onSaveProduct(product)
+                                resetForm()
+                            }
+                        },
+                        onCancel = { resetForm() }
+                    )
+                    Spacer(modifier = Modifier.size(24.dp))
                     Text(
-                        text = exportMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 8.dp)
+                        text = "Productos guardados (${products.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Copia de seguridad",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                text = "Exporta tus productos a un archivo JSON para guardarlos o restaura un respaldo anterior desde aquí.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.size(16.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(onClick = { exportLauncher.launch("productos-export.json") }) {
+                                    Text("Exportar respaldo")
+                                }
+                                TextButton(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
+                                    Text("Restaurar respaldo")
+                                }
+                            }
+                            if (exportMessage.isNotBlank()) {
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    text = exportMessage,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.size(24.dp))
+                }
+            }
+            if (activeManagementView == "products") {
+                items(products) { product ->
+                    ProductManagementItem(
+                        product = product,
+                        onEdit = {
+                            currentProduct = product
+                            equipo = product.equipo; marca = product.marca
+                            modelo = product.modelo; tipo = product.tipo
+                            precioUsdText = product.precioUsd.toString()
+                            imageUri = product.imageUrl; garantia = product.garantia
+                            colores = product.colores; infoAdicional = product.infoAdicional
+                        },
+                        onDelete = { onDeleteProduct(product) },
+                        onToggleActive = { onSaveProduct(product.copy(isActive = !product.isActive)) }
                     )
                 }
-                Spacer(modifier = Modifier.size(24.dp))
-                Text(
-                    text = "Productos guardados (${products.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-            }
-            items(products) { product ->
-                ProductManagementItem(
-                    product = product,
-                    onEdit = {
-                        currentProduct = product
-                        equipo = product.equipo; marca = product.marca
-                        modelo = product.modelo; tipo = product.tipo
-                        precioUsdText = product.precioUsd.toString()
-                        imageUri = product.imageUrl; garantia = product.garantia
-                        colores = product.colores; infoAdicional = product.infoAdicional
-                    },
-                    onDelete = { onDeleteProduct(product) },
-                    onToggleActive = { onSaveProduct(product.copy(isActive = !product.isActive)) }
-                )
             }
         }
     }
