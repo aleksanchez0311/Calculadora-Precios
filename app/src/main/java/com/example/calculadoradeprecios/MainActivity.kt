@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -597,6 +598,7 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
 
 // ---------- Tarjeta de producto (vista principal) ----------
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductCard(
     product: com.example.calculadoradeprecios.data.Product,
