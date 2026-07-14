@@ -62,11 +62,23 @@ jobs:
           else
             echo "Gradle wrapper no encontrado. Descargando Gradle moderno y ejecutando build..."
             GRADLE_VERSION=8.5.1
-            wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -O /tmp/gradle.zip
-            unzip -q /tmp/gradle.zip -d /tmp/
-            export PATH=/tmp/gradle-${GRADLE_VERSION}/bin:$PATH
-            gradle -v
-            gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
+            DOWNLOAD_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+            echo "Descargando $DOWNLOAD_URL"
+            curl -fSL --retry 5 --retry-delay 5 -o /tmp/gradle.zip "$DOWNLOAD_URL" || true
+            if [ ! -s /tmp/gradle.zip ]; then
+              echo "Descarga fallida o archivo vacío: /tmp/gradle.zip"
+              echo "Intentando instalar gradle vía apt como fallback..."
+              sudo apt-get update
+              sudo apt-get install -y gradle
+              gradle -v
+              gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
+            else
+              set -e
+              unzip -q /tmp/gradle.zip -d /tmp/
+              export PATH=/tmp/gradle-${GRADLE_VERSION}/bin:$PATH
+              gradle -v
+              gradle :app:assembleDebug --no-daemon --stacktrace || (echo "Gradle build failed"; exit 1)
+            fi
           fi
 
       - name: Subir APK generado
