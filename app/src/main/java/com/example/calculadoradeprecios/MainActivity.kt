@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -216,80 +218,96 @@ fun CalculatorScreen(
     var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
     val visibleProducts = products.filter { it.isActive }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        SectionTitle(text = "Tasa de cambio USD → CUP")
-        CurrencyRateInput(rate = exchangeRate, onRateChange = onExchangeRateChange)
-        Spacer(modifier = Modifier.size(12.dp))
-        SearchField(value = searchQuery, onValueChange = onSearchQueryChange)
-        Spacer(modifier = Modifier.size(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
         ) {
-            Text(
-                text = if (selectionMode) "Selecciona productos" else "Productos activos",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            if (selectionMode) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (selectedIds.isNotEmpty()) {
-                        Button(onClick = {
-                            val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
-                            if (selectedProducts.isNotEmpty()) {
-                                shareProducts(context, selectedProducts, exchangeRate, format)
-                            }
-                        }) {
-                            Text("Compartir (${selectedIds.size})")
-                        }
-                    }
+            SectionTitle(text = "Tasa de cambio USD → CUP")
+            CurrencyRateInput(rate = exchangeRate, onRateChange = onExchangeRateChange)
+            Spacer(modifier = Modifier.size(12.dp))
+            SearchField(value = searchQuery, onValueChange = onSearchQueryChange)
+            Spacer(modifier = Modifier.size(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (selectionMode) "Selecciona productos" else "Productos activos",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (selectionMode) {
                     TextButton(onClick = {
                         selectionMode = false
                         selectedIds = emptySet()
                     }) {
                         Text("Cancelar")
                     }
+                } else {
+                    Text(
+                        text = "Mantén presionada una tarjeta para compartir varias",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.size(12.dp))
+            if (visibleProducts.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "No hay productos. Agrégalos en la pestaña Administración.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
                 }
             } else {
-                TextButton(onClick = { selectionMode = true }) {
-                    Text("Seleccionar")
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(visibleProducts) { product ->
+                        ProductCard(
+                            product = product,
+                            exchangeRate = exchangeRate,
+                            format = format,
+                            selectionMode = selectionMode,
+                            isSelected = selectedIds.contains(product.id),
+                            onToggleSelection = {
+                                selectedIds = if (selectedIds.contains(product.id)) {
+                                    selectedIds - product.id
+                                } else {
+                                    selectedIds + product.id
+                                }
+                            },
+                            onEnterSelectionMode = {
+                                if (!selectionMode) {
+                                    selectionMode = true
+                                }
+                                selectedIds = selectedIds + product.id
+                            }
+                        )
+                        Spacer(modifier = Modifier.size(10.dp))
+                    }
                 }
             }
         }
-        Spacer(modifier = Modifier.size(12.dp))
-        if (visibleProducts.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "No hay productos. Agrégalos en la pestaña Administración.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(visibleProducts) { product ->
-                    ProductCard(
-                        product = product,
-                        exchangeRate = exchangeRate,
-                        format = format,
-                        selectionMode = selectionMode,
-                        isSelected = selectedIds.contains(product.id),
-                        onToggleSelection = {
-                            selectedIds = if (selectedIds.contains(product.id)) {
-                                selectedIds - product.id
-                            } else {
-                                selectedIds + product.id
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.size(10.dp))
-                }
+
+        if (selectionMode && selectedIds.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = {
+                    val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
+                    if (selectedProducts.isNotEmpty()) {
+                        shareProducts(context, selectedProducts, exchangeRate, format)
+                    }
+                },
+                containerColor = Color(0xFF25D366),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir seleccion")
             }
         }
     }
@@ -586,13 +604,23 @@ fun ProductCard(
     format: DecimalFormat,
     selectionMode: Boolean,
     isSelected: Boolean,
-    onToggleSelection: () -> Unit
+    onToggleSelection: () -> Unit,
+    onEnterSelectionMode: () -> Unit
 ) {
     val context = LocalContext.current
     val precioCup = product.precioUsd * exchangeRate
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    if (selectionMode) {
+                        onToggleSelection()
+                    }
+                },
+                onLongClick = onEnterSelectionMode
+            ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
