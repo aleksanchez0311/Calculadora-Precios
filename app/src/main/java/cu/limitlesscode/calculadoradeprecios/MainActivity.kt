@@ -101,6 +101,7 @@ import cu.limitlesscode.calculadoradeprecios.data.Product
 
 sealed class Screen(val route: String, val title: String) {
     object Calculator : Screen("calculator", "Calculadora")
+    object Calculator : Screen("calculator", "Calculadora")
     object Management : Screen("management", "Administración")
 }
 
