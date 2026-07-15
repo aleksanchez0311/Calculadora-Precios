@@ -95,6 +95,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
+import cu.limitlesscode.calculadoradeprecios.data.Product
 
 // ---------- Rutas de navegación ----------
 
@@ -214,7 +215,7 @@ fun BottomNavigationBar(navController: NavHostController) {
 fun CalculatorScreen(
     viewModel: MainViewModel? = null,
     exchangeRate: Double,
-    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
+    products: List<Product>,
     searchQuery: String,
     onExchangeRateChange: (Double) -> Unit,
     onSearchQueryChange: (String) -> Unit
@@ -281,7 +282,7 @@ fun CalculatorScreen(
                     }
                 } else {
                     Text(
-                        text = "Mantén presionada una tarjeta para compartir varias",
+                        text = "",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
@@ -355,13 +356,13 @@ fun CalculatorScreen(
 
 @Composable
 fun ManagementScreen(
-    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
-    onSaveProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit,
-    onDeleteProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit
+    products: List<Product>,
+    onSaveProduct: (Product) -> Unit,
+    onDeleteProduct: (Product) -> Unit
 ) {
     val context = LocalContext.current
 
-    var currentProduct by remember { mutableStateOf<cu.limitlesscode.calculadoradeprecios.data.Product?>(null) }
+    var currentProduct by remember { mutableStateOf<Product?>(null) }
     var equipo by rememberSaveable { mutableStateOf("") }
     var marca by rememberSaveable { mutableStateOf("") }
     var modelo by rememberSaveable { mutableStateOf("") }
@@ -416,7 +417,7 @@ fun ManagementScreen(
                 val items = json.optJSONArray("products") ?: JSONArray()
                 for (i in 0 until items.length()) {
                     val item = items.getJSONObject(i)
-                    val product = cu.limitlesscode.calculadoradeprecios.data.Product(
+                    val product = Product(
                         id = item.optLong("id", 0L),
                         equipo = item.optString("equipo", ""),
                         marca = item.optString("marca", ""),
@@ -520,7 +521,7 @@ fun ManagementScreen(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                                ) ?: cu.limitlesscode.calculadoradeprecios.data.Product(
+                                ) ?: Product(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
@@ -638,7 +639,7 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductCard(
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     exchangeRate: Double,
     format: DecimalFormat,
     selectionMode: Boolean,
@@ -955,7 +956,7 @@ fun FormField(
 
 @Composable
 fun ProductManagementItem(
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onToggleActive: () -> Unit
@@ -1069,7 +1070,7 @@ fun createDecimalFormat(): DecimalFormat {
  */
 fun launchShareIntent(
     context: android.content.Context,
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     exchangeRate: Double,
     format: DecimalFormat
 ) {
@@ -1101,7 +1102,7 @@ fun launchShareIntent(
     }
 }
 
-fun shareProductsIndividually(context: android.content.Context, products: List<cu.limitlesscode.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
+fun shareProductsIndividually(context: android.content.Context, products: List<Product>, exchangeRate: Double, format: DecimalFormat) {
     products.forEach { product ->
         launchShareIntent(context, product, exchangeRate, format)
     }
@@ -1113,7 +1114,7 @@ fun shareProductsIndividually(context: android.content.Context, products: List<c
 @Composable
 fun DefaultPreview() {
     val sampleProducts = listOf(
-        cu.limitlesscode.calculadoradeprecios.data.Product(
+        Product(
             id = 1, equipo = "Teléfono", marca = "Samsung",
             modelo = "Galaxy S24", tipo = "Alta gama", precioUsd = 650.0,
             garantia = "12 meses", colores = "Negro, Blanco, Azul",
