@@ -172,8 +172,7 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
                         ManagementScreen(
                             products = products,
                             onSaveProduct = viewModel::saveProduct,
-                            onDeleteProduct = viewModel::deleteProduct,
-                            exchangeRate = exchangeRate
+                            onDeleteProduct = viewModel::deleteProduct
                         )
                     }
                 }
@@ -222,13 +221,11 @@ fun CalculatorScreen(
     products: List<Product>,
     searchQuery: String,
     onExchangeRateChange: (Double) -> Unit,
-    onSearchQueryChange: (String) -> Unit,
-    onDeactivateProducts: (Product) -> Unit = {}
+    onSearchQueryChange: (String) -> Unit
 ) {
     val context = LocalContext.current
     val format = remember { createDecimalFormat() }
     var selectionMode by rememberSaveable { mutableStateOf(false) }
-    var selectionAction by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
     val visibleProducts = products.filter { it.isActive }
 
@@ -274,29 +271,24 @@ fun CalculatorScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = when {
-                        selectionMode && selectionAction == "share" -> "Selecciona productos para compartir"
-                        selectionMode && selectionAction == "hide" -> "Selecciona productos para ocultar"
-                        else -> "Productos activos"
-                    },
+                    text = if (selectionMode) "Selecciona productos" else "Productos",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                if (selectionMode) {
-                    TextButton(onClick = {
-                        selectionMode = false
-                        selectedIds = emptySet()
-                        selectionAction = null
-                        viewModel?.cancelSharing()
-                    }) {
-                        Text("Cancelar")
-                    }
-                } else {
-                    TextButton(onClick = {
-                        selectionMode = true
-                        selectionAction = "hide"
-                    }) {
-                        Text("Ocultar")
+                Row {
+                    if (selectionMode) {
+                        TextButton(onClick = {
+                            selectionMode = false
+                            selectedIds = emptySet()
+                            viewModel?.cancelSharing()
+                        }) {
+                            Text("Cancelar")
+                        }
+                        TextButton(onClick = {
+                            selectedIds = visibleProducts.map { it.id }.toSet()
+                        }) {
+                            Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
@@ -306,18 +298,6 @@ fun CalculatorScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
-            } else if (selectionAction == "hide" && visibleProducts.isNotEmpty()) {
-                TextButton(onClick = { selectedIds = visibleProducts.map { it.id }.toSet() }) {
-                    Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
-                }
-            }
-            Spacer(modifier = Modifier.size(12.dp))
-            TextButton(onClick = {
-                if (selectionAction == "hide" && selectionMode) {
-                    selectedIds = visibleProducts.map { it.id }.toSet()
-                }
-            }) {
-                Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.size(12.dp))
             if (visibleProducts.isEmpty()) {
@@ -362,32 +342,22 @@ fun CalculatorScreen(
                 onClick = {
                     val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
                     if (selectedProducts.isNotEmpty()) {
-                        if (selectionAction == "share") {
-                            // 1. Cargar la cola en el ViewModel
-                            viewModel?.startMultipleSharing(selectedProducts)
-                            // 2. Consumir y enviar el primer producto inmediatamente
-                            val firstProduct = viewModel?.consumeNextProduct()
-                            if (firstProduct != null) {
-                                launchShareIntent(context, firstProduct, exchangeRate, format)
-                            }
-                        } else if (selectionAction == "hide") {
-                            selectedProducts.forEach { onDeactivateProducts(it.copy(isActive = false)) }
-                            selectionMode = false
-                            selectedIds = emptySet()
-                            selectionAction = null
+                        // 1. Cargar la cola en el ViewModel
+                        viewModel?.startMultipleSharing(selectedProducts)
+                        // 2. Consumir y enviar el primer producto inmediatamente
+                        val firstProduct = viewModel?.consumeNextProduct()
+                        if (firstProduct != null) {
+                            launchShareIntent(context, firstProduct, exchangeRate, format)
                         }
                     }
                 },
-                containerColor = if (selectionAction == "share") Color(0xFF25D366) else Color(0xFFF44336),
+                containerColor = Color(0xFF25D366),
                 contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
-                Icon(
-                    imageVector = if (selectionAction == "share") Icons.Default.Share else Icons.Default.VisibilityOff,
-                    contentDescription = if (selectionAction == "share") "Compartir seleccion" else "Ocultar seleccion"
-                )
+                Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir seleccion")
             }
         }
     }
@@ -399,8 +369,7 @@ fun CalculatorScreen(
 fun ManagementScreen(
     products: List<Product>,
     onSaveProduct: (Product) -> Unit,
-    onDeleteProduct: (Product) -> Unit,
-    exchangeRate: Double = 1.0
+    onDeleteProduct: (Product) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -534,18 +503,10 @@ fun ManagementScreen(
                     TextButton(onClick = { activeManagementView = "backup" }) {
                         Text("Respaldo")
                     }
-                    TextButton(onClick = { activeManagementView = "disabled" }) {
-                        Text("Desactivados")
-                    }
                 }
                 Spacer(modifier = Modifier.size(12.dp))
 
                 if (activeManagementView == "products") {
-                    Text(
-                        text = "Tasa de cambio actual: ${String.format("%.2f", exchangeRate)} CUP por USD",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
                     Spacer(modifier = Modifier.size(8.dp))
                     ProductManagementForm(
                         equipo = equipo,
@@ -590,8 +551,7 @@ fun ManagementScreen(
                                 resetForm()
                             }
                         },
-                        onCancel = { resetForm() },
-                        exchangeRate = exchangeRate
+                        onCancel = { resetForm() }
                     )
                     Spacer(modifier = Modifier.size(24.dp))
                     Text(
@@ -641,9 +601,8 @@ fun ManagementScreen(
                     Spacer(modifier = Modifier.size(24.dp))
                 }
             }
-            if (activeManagementView == "products" || activeManagementView == "disabled") {
-                val filtered = if (activeManagementView == "disabled") products.filter { !it.isActive } else products
-                items(filtered) { product ->
+            if (activeManagementView == "products") {
+                items(products) { product ->
                     ProductManagementItem(
                         product = product,
                         onEdit = {
