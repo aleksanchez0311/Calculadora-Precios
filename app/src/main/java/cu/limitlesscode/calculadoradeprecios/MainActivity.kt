@@ -540,6 +540,12 @@ fun ManagementScreen(
                 Spacer(modifier = Modifier.size(12.dp))
 
                 if (activeManagementView == "products") {
+                    Text(
+                        text = "Tasa de cambio actual: ${String.format("%.2f", exchangeRate ?: 1.0)} CUP por USD",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
                     ProductManagementForm(
                         equipo = equipo,
                         marca = marca,
@@ -583,7 +589,8 @@ fun ManagementScreen(
                                 resetForm()
                             }
                         },
-                        onCancel = { resetForm() }
+                        onCancel = { resetForm() },
+                        exchangeRate = exchangeRate
                     )
                     Spacer(modifier = Modifier.size(24.dp))
                     Text(
@@ -872,9 +879,6 @@ fun ProductManagementForm(
                 label = "Precio USD *",
                 keyboardType = KeyboardType.Number
             )
-            TextButton(onClick = { /* calculadora se maneja con estado local */ }) {
-                Text("Calcular USD desde CUP", color = MaterialTheme.colorScheme.primary)
-            }
             Spacer(modifier = Modifier.size(4.dp))
             FormField(
                 value = infoAdicional,
@@ -892,6 +896,16 @@ fun ProductManagementForm(
 
             Spacer(modifier = Modifier.size(4.dp))
             Divider(color = Color(0xFFEEEEEE))
+            Spacer(modifier = Modifier.size(12.dp))
+            Text(
+                text = "Calculadora CUP → USD",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            CupToUsdConverter(exchangeRate = exchangeRate, onUsdCalculated = { usd ->
+                onPrecioUsdChange(if (usd % 1 == 0) usd.toInt().toString() else usd.toString())
+            })
             Spacer(modifier = Modifier.size(12.dp))
 
             // --- Selector de imagen local ---
@@ -1164,6 +1178,53 @@ fun launchShareIntent(
 fun shareProductsIndividually(context: android.content.Context, products: List<Product>, exchangeRate: Double, format: DecimalFormat) {
     products.forEach { product ->
         launchShareIntent(context, product, exchangeRate, format)
+    }
+}
+
+// ---------- Calculadora CUP -> USD ----------
+
+@Composable
+fun CupToUsdConverter(
+    exchangeRate: Double,
+    onUsdCalculated: (Double) -> Unit
+) {
+    var cupText by rememberSaveable { mutableStateOf("") }
+    val cup = cupText.replace(',', '.').toDoubleOrNull() ?: 0.0
+    val usd = if (exchangeRate != 0.0) cup / exchangeRate else 0.0
+
+    Column {
+        OutlinedTextField(
+            value = cupText,
+            onValueChange = { newValue ->
+                cupText = newValue
+            },
+            label = { Text("Monto en CUP") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.size(4.dp))
+        Text(
+            text = "USD aprox: ${String.format("%.2f", usd)}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.size(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = {
+                if (usd > 0) {
+                    onUsdCalculated(usd)
+                    cupText = ""
+                }
+            }) {
+                Text("Usar valor")
+            }
+            TextButton(onClick = { cupText = "" }) {
+                Text("Limpiar")
+            }
+        }
     }
 }
 
