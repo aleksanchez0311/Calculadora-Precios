@@ -94,6 +94,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 import cu.limitlesscode.calculadoradeprecios.data.BackupManager
+import cu.limitlesscode.calculadoradeprecios.data.Product
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -163,7 +164,8 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
                             products = products,
                             searchQuery = searchQuery,
                             onExchangeRateChange = { viewModel.updateExchangeRate(it) },
-                            onSearchQueryChange = viewModel::setSearchQuery
+                            onSearchQueryChange = viewModel::setSearchQuery,
+                            onDeactivateProducts = { viewModel.saveProduct(it) }
                         )
                     }
                     composable(Screen.Management.route) {
@@ -216,14 +218,16 @@ fun BottomNavigationBar(navController: NavHostController) {
 fun CalculatorScreen(
     viewModel: MainViewModel? = null,
     exchangeRate: Double,
-    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
+    products: List<Product>,
     searchQuery: String,
     onExchangeRateChange: (Double) -> Unit,
-    onSearchQueryChange: (String) -> Unit
+    onSearchQueryChange: (String) -> Unit,
+    onDeactivateProducts: (Product) -> Unit = {}
 ) {
     val context = LocalContext.current
     val format = remember { createDecimalFormat() }
     var selectionMode by rememberSaveable { mutableStateOf(false) }
+    var selectionAction by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
     val visibleProducts = products.filter { it.isActive }
 
@@ -269,7 +273,11 @@ fun CalculatorScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (selectionMode) "Selecciona productos" else "Productos activos",
+                    text = when {
+                        selectionMode && selectionAction == "share" -> "Selecciona productos para compartir"
+                        selectionMode && selectionAction == "hide" -> "Selecciona productos para ocultar"
+                        else -> "Productos activos"
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -277,17 +285,38 @@ fun CalculatorScreen(
                     TextButton(onClick = {
                         selectionMode = false
                         selectedIds = emptySet()
+                        selectionAction = null
                         viewModel?.cancelSharing()
                     }) {
                         Text("Cancelar")
                     }
                 } else {
-                    Text(
-                        text = "Mantén presionada una tarjeta para compartir varias",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+                    TextButton(onClick = {
+                        selectionMode = true
+                        selectionAction = "hide"
+                    }) {
+                        Text("Ocultar")
+                    }
                 }
+            }
+            if (!selectionMode) {
+                Text(
+                    text = "Mantén presionada una tarjeta para compartir varias",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            } else if (selectionAction == "hide" && visibleProducts.isNotEmpty()) {
+                TextButton(onClick = { selectedIds = visibleProducts.map { it.id }.toSet() }) {
+                    Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(modifier = Modifier.size(12.dp))
+            TextButton(onClick = {
+                if (selectionAction == "hide" && selectionMode) {
+                    selectedIds = visibleProducts.map { it.id }.toSet()
+                }
+            }) {
+                Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.size(12.dp))
             if (visibleProducts.isEmpty()) {
@@ -332,22 +361,32 @@ fun CalculatorScreen(
                 onClick = {
                     val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
                     if (selectedProducts.isNotEmpty()) {
-                        // 1. Cargar la cola en el ViewModel
-                        viewModel?.startMultipleSharing(selectedProducts)
-                        // 2. Consumir y enviar el primer producto inmediatamente
-                        val firstProduct = viewModel?.consumeNextProduct()
-                        if (firstProduct != null) {
-                            launchShareIntent(context, firstProduct, exchangeRate, format)
+                        if (selectionAction == "share") {
+                            // 1. Cargar la cola en el ViewModel
+                            viewModel?.startMultipleSharing(selectedProducts)
+                            // 2. Consumir y enviar el primer producto inmediatamente
+                            val firstProduct = viewModel?.consumeNextProduct()
+                            if (firstProduct != null) {
+                                launchShareIntent(context, firstProduct, exchangeRate, format)
+                            }
+                        } else if (selectionAction == "hide") {
+                            selectedProducts.forEach { onDeactivateProducts(it.copy(isActive = false)) }
+                            selectionMode = false
+                            selectedIds = emptySet()
+                            selectionAction = null
                         }
                     }
                 },
-                containerColor = Color(0xFF25D366),
+                containerColor = if (selectionAction == "share") Color(0xFF25D366) else Color(0xFFF44336),
                 contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
-                Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir seleccion")
+                Icon(
+                    imageVector = if (selectionAction == "share") Icons.Default.Share else Icons.Default.VisibilityOff,
+                    contentDescription = if (selectionAction == "share") "Compartir seleccion" else "Ocultar seleccion"
+                )
             }
         }
     }
@@ -357,13 +396,13 @@ fun CalculatorScreen(
 
 @Composable
 fun ManagementScreen(
-    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
-    onSaveProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit,
-    onDeleteProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit
+    products: List<Product>,
+    onSaveProduct: (Product) -> Unit,
+    onDeleteProduct: (Product) -> Unit
 ) {
     val context = LocalContext.current
 
-    var currentProduct by remember { mutableStateOf<cu.limitlesscode.calculadoradeprecios.data.Product?>(null) }
+    var currentProduct by remember { mutableStateOf<Product?>(null) }
     var equipo by rememberSaveable { mutableStateOf("") }
     var marca by rememberSaveable { mutableStateOf("") }
     var modelo by rememberSaveable { mutableStateOf("") }
@@ -411,11 +450,11 @@ fun ManagementScreen(
                     if (!text.isNullOrBlank()) {
                         val json = JSONObject(text)
                         val items = json.optJSONArray("products") ?: JSONArray()
-                        val products = mutableListOf<cu.limitlesscode.calculadoradeprecios.data.Product>()
+                        val products = mutableListOf<Product>()
                         for (i in 0 until items.length()) {
                             val item = items.getJSONObject(i)
                             products.add(
-                                cu.limitlesscode.calculadoradeprecios.data.Product(
+                                Product(
                                     id = item.optLong("id", 0L),
                                     equipo = item.optString("equipo", ""),
                                     marca = item.optString("marca", ""),
@@ -493,6 +532,9 @@ fun ManagementScreen(
                     TextButton(onClick = { activeManagementView = "backup" }) {
                         Text("Respaldo")
                     }
+                    TextButton(onClick = { activeManagementView = "disabled" }) {
+                        Text("Desactivados")
+                    }
                 }
                 Spacer(modifier = Modifier.size(12.dp))
 
@@ -531,7 +573,7 @@ fun ManagementScreen(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                                ) ?: cu.limitlesscode.calculadoradeprecios.data.Product(
+                                ) ?: Product(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
@@ -590,8 +632,9 @@ fun ManagementScreen(
                     Spacer(modifier = Modifier.size(24.dp))
                 }
             }
-            if (activeManagementView == "products") {
-                items(products) { product ->
+            if (activeManagementView == "products" || activeManagementView == "disabled") {
+                val filtered = if (activeManagementView == "disabled") products.filter { !it.isActive } else products
+                items(filtered) { product ->
                     ProductManagementItem(
                         product = product,
                         onEdit = {
@@ -649,7 +692,7 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductCard(
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     exchangeRate: Double,
     format: DecimalFormat,
     selectionMode: Boolean,
@@ -966,7 +1009,7 @@ fun FormField(
 
 @Composable
 fun ProductManagementItem(
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onToggleActive: () -> Unit
@@ -1080,7 +1123,7 @@ fun createDecimalFormat(): DecimalFormat {
  */
 fun launchShareIntent(
     context: android.content.Context,
-    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    product: Product,
     exchangeRate: Double,
     format: DecimalFormat
 ) {
@@ -1112,7 +1155,7 @@ fun launchShareIntent(
     }
 }
 
-fun shareProductsIndividually(context: android.content.Context, products: List<cu.limitlesscode.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
+fun shareProductsIndividually(context: android.content.Context, products: List<Product>, exchangeRate: Double, format: DecimalFormat) {
     products.forEach { product ->
         launchShareIntent(context, product, exchangeRate, format)
     }
@@ -1124,7 +1167,7 @@ fun shareProductsIndividually(context: android.content.Context, products: List<c
 @Composable
 fun DefaultPreview() {
     val sampleProducts = listOf(
-        cu.limitlesscode.calculadoradeprecios.data.Product(
+        Product(
             id = 1, equipo = "Teléfono", marca = "Samsung",
             modelo = "Galaxy S24", tipo = "Alta gama", precioUsd = 650.0,
             garantia = "12 meses", colores = "Negro, Blanco, Azul",
