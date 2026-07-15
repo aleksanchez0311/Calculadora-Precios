@@ -172,7 +172,8 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
                         ManagementScreen(
                             products = products,
                             onSaveProduct = viewModel::saveProduct,
-                            onDeleteProduct = viewModel::deleteProduct
+                            onDeleteProduct = viewModel::deleteProduct,
+                            exchangeRate = exchangeRate
                         )
                     }
                 }
@@ -846,7 +847,8 @@ fun ProductManagementForm(
     onColoresChange: (String) -> Unit,
     onInfoAdicionalChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    exchangeRate: Double = 1.0
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -870,6 +872,10 @@ fun ProductManagementForm(
                 label = "Precio USD *",
                 keyboardType = KeyboardType.Number
             )
+            TextButton(onClick = { /* calculadora se maneja con estado local */ }) {
+                Text("Calcular USD desde CUP", color = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(modifier = Modifier.size(4.dp))
             FormField(
                 value = infoAdicional,
                 onValueChange = onInfoAdicionalChange,
