@@ -102,9 +102,8 @@ import org.json.JSONObject
 // ---------- Rutas de navegación ----------
 
 sealed class Screen(val route: String, val title: String) {
-    object Operations : Screen("operations", "Operaciones")
-    object Products : Screen("products", "Productos")
-    object Admin : Screen("admin", "Administración")
+    object Calculator : Screen("calculator", "Calculadora")
+    object Management : Screen("management", "Administración")
 }
 
 // ---------- Activity ----------
@@ -157,28 +156,24 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
                     .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                NavHost(navController = navController, startDestination = Screen.Operations.route) {
-                    composable(Screen.Operations.route) {
+                NavHost(navController = navController, startDestination = Screen.Calculator.route) {
+                    composable(Screen.Calculator.route) {
                         CalculatorScreen(
                             viewModel = viewModel,
                             exchangeRate = exchangeRate,
                             products = products,
                             searchQuery = searchQuery,
                             onExchangeRateChange = { viewModel.updateExchangeRate(it) },
-                            onSearchQueryChange = viewModel::setSearchQuery
+                            onSearchQueryChange = viewModel::setSearchQuery,
+                            onDeactivateProducts = { viewModel.saveProduct(it) }
                         )
                     }
-                    composable(Screen.Products.route) {
-                        ProductsScreen(
+                    composable(Screen.Management.route) {
+                        ManagementScreen(
                             products = products,
                             onSaveProduct = viewModel::saveProduct,
-                            onDeleteProduct = viewModel::deleteProduct
-                        )
-                    }
-                    composable(Screen.Admin.route) {
-                        AdminBackupScreen(
-                            products = products,
-                            onSaveProduct = viewModel::saveProduct
+                            onDeleteProduct = viewModel::deleteProduct,
+                            exchangeRate = exchangeRate
                         )
                     }
                 }
@@ -191,7 +186,7 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    val items = listOf(Screen.Operations, Screen.Products, Screen.Admin)
+    val items = listOf(Screen.Calculator, Screen.Management)
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentDestination = currentBackStackEntry.value?.destination
 
@@ -208,11 +203,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 },
                 icon = {
                     Icon(
-                        imageVector = when {
-                            screen is Screen.Operations -> Icons.Default.Home
-                            screen is Screen.Products -> Icons.Default.Inventory
-                            else -> Icons.Default.Share
-                        },
+                        imageVector = if (screen is Screen.Calculator) Icons.Default.Home else Icons.Default.Inventory,
                         contentDescription = screen.title
                     )
                 },
@@ -231,11 +222,13 @@ fun CalculatorScreen(
     products: List<Product>,
     searchQuery: String,
     onExchangeRateChange: (Double) -> Unit,
-    onSearchQueryChange: (String) -> Unit
+    onSearchQueryChange: (String) -> Unit,
+    onDeactivateProducts: (Product) -> Unit = {}
 ) {
     val context = LocalContext.current
     val format = remember { createDecimalFormat() }
     var selectionMode by rememberSaveable { mutableStateOf(false) }
+    var selectionAction by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
     val visibleProducts = products.filter { it.isActive }
 
@@ -281,24 +274,29 @@ fun CalculatorScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (selectionMode) "Selecciona productos" else "Productos",
+                    text = when {
+                        selectionMode && selectionAction == "share" -> "Selecciona productos para compartir"
+                        selectionMode && selectionAction == "hide" -> "Selecciona productos para ocultar"
+                        else -> "Productos activos"
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                Row {
-                    if (selectionMode) {
-                        TextButton(onClick = {
-                            selectionMode = false
-                            selectedIds = emptySet()
-                            viewModel?.cancelSharing()
-                        }) {
-                            Text("Cancelar")
-                        }
-                        TextButton(onClick = {
-                            selectedIds = visibleProducts.map { it.id }.toSet()
-                        }) {
-                            Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
-                        }
+                if (selectionMode) {
+                    TextButton(onClick = {
+                        selectionMode = false
+                        selectedIds = emptySet()
+                        selectionAction = null
+                        viewModel?.cancelSharing()
+                    }) {
+                        Text("Cancelar")
+                    }
+                } else {
+                    TextButton(onClick = {
+                        selectionMode = true
+                        selectionAction = "hide"
+                    }) {
+                        Text("Ocultar")
                     }
                 }
             }
@@ -308,12 +306,24 @@ fun CalculatorScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
+            } else if (selectionAction == "hide" && visibleProducts.isNotEmpty()) {
+                TextButton(onClick = { selectedIds = visibleProducts.map { it.id }.toSet() }) {
+                    Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(modifier = Modifier.size(12.dp))
+            TextButton(onClick = {
+                if (selectionAction == "hide" && selectionMode) {
+                    selectedIds = visibleProducts.map { it.id }.toSet()
+                }
+            }) {
+                Text("Seleccionar todos", color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.size(12.dp))
             if (visibleProducts.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "No hay productos. Agrégalos en la pestaña Productos.",
+                        text = "No hay productos. Agrégalos en la pestaña Administración.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
@@ -352,34 +362,45 @@ fun CalculatorScreen(
                 onClick = {
                     val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
                     if (selectedProducts.isNotEmpty()) {
-                        // 1. Cargar la cola en el ViewModel
-                        viewModel?.startMultipleSharing(selectedProducts)
-                        // 2. Consumir y enviar el primer producto inmediatamente
-                        val firstProduct = viewModel?.consumeNextProduct()
-                        if (firstProduct != null) {
-                            launchShareIntent(context, firstProduct, exchangeRate, format)
+                        if (selectionAction == "share") {
+                            // 1. Cargar la cola en el ViewModel
+                            viewModel?.startMultipleSharing(selectedProducts)
+                            // 2. Consumir y enviar el primer producto inmediatamente
+                            val firstProduct = viewModel?.consumeNextProduct()
+                            if (firstProduct != null) {
+                                launchShareIntent(context, firstProduct, exchangeRate, format)
+                            }
+                        } else if (selectionAction == "hide") {
+                            selectedProducts.forEach { onDeactivateProducts(it.copy(isActive = false)) }
+                            selectionMode = false
+                            selectedIds = emptySet()
+                            selectionAction = null
                         }
                     }
                 },
-                containerColor = Color(0xFF25D366),
+                containerColor = if (selectionAction == "share") Color(0xFF25D366) else Color(0xFFF44336),
                 contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
-                Icon(imageVector = Icons.Default.Share, contentDescription = "Compartir seleccion")
+                Icon(
+                    imageVector = if (selectionAction == "share") Icons.Default.Share else Icons.Default.VisibilityOff,
+                    contentDescription = if (selectionAction == "share") "Compartir seleccion" else "Ocultar seleccion"
+                )
             }
         }
     }
 }
 
-// ---------- Pantalla de productos ----------
+// ---------- Pantalla de administración ----------
 
 @Composable
-fun ProductsScreen(
+fun ManagementScreen(
     products: List<Product>,
     onSaveProduct: (Product) -> Unit,
-    onDeleteProduct: (Product) -> Unit
+    onDeleteProduct: (Product) -> Unit,
+    exchangeRate: Double = 1.0
 ) {
     val context = LocalContext.current
 
@@ -394,126 +415,8 @@ fun ProductsScreen(
     var colores by rememberSaveable { mutableStateOf("") }
     var infoAdicional by rememberSaveable { mutableStateOf("") }
     var errorMessage by rememberSaveable { mutableStateOf("") }
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-
-    // Selector de imagen de la galería
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        uri?.let {
-            // Persistir permiso de lectura para que el URI siga siendo válido tras reiniciar la app
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    it,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) { /* No todos los URIs soportan persistencia */ }
-            imageUri = it.toString()
-        }
-    }
-
-    fun resetForm() {
-        currentProduct = null
-        equipo = ""; marca = ""; modelo = ""; tipo = ""
-        precioUsdText = ""; imageUri = ""; garantia = ""; colores = ""; infoAdicional = ""
-        errorMessage = ""
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            item {
-                SectionTitle(text = "Productos")
-                Spacer(modifier = Modifier.size(8.dp))
-                ProductManagementForm(
-                    equipo = equipo,
-                    marca = marca,
-                    modelo = modelo,
-                    tipo = tipo,
-                    precioUsdText = precioUsdText,
-                    imageUri = imageUri,
-                    garantia = garantia,
-                    colores = colores,
-                    infoAdicional = infoAdicional,
-                    errorMessage = errorMessage,
-                    onEquipoChange = { equipo = it },
-                    onMarcaChange = { marca = it },
-                    onModeloChange = { modelo = it },
-                    onTipoChange = { tipo = it },
-                    onPrecioUsdChange = { precioUsdText = it },
-                    onPickImage = {
-                        imagePickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    onClearImage = { imageUri = "" },
-                    onGarantiaChange = { garantia = it },
-                    onColoresChange = { colores = it },
-                    onInfoAdicionalChange = { infoAdicional = it },
-                    onSubmit = {
-                        val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
-                        if (equipo.isBlank() || precioUsd == null || imageUri.isBlank()) {
-                            errorMessage = "Los campos Equipo, Precio e Imagen son obligatorios"
-                        } else {
-                            val product = currentProduct?.copy(
-                                equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
-                                garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                            ) ?: Product(
-                                equipo = equipo, marca = marca, modelo = modelo,
-                                tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
-                                garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                            )
-                            onSaveProduct(product)
-                            resetForm()
-                        }
-                    },
-                    onCancel = { resetForm() }
-                )
-                Spacer(modifier = Modifier.size(24.dp))
-                Text(
-                    text = "Productos guardados (${products.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-            }
-            items(products) { product ->
-                ProductManagementItem(
-                    product = product,
-                    onEdit = {
-                        currentProduct = product
-                        equipo = product.equipo; marca = product.marca
-                        modelo = product.modelo; tipo = product.tipo
-                        precioUsdText = product.precioUsd.toString()
-                        imageUri = product.imageUrl; garantia = product.garantia
-                        colores = product.colores; infoAdicional = product.infoAdicional
-                    },
-                    onDelete = { onDeleteProduct(product) },
-                    onToggleActive = { onSaveProduct(product.copy(isActive = !product.isActive)) }
-                )
-            }
-        }
-    }
-}
-
-// ---------- Pantalla de administración (backup/restore) ----------
-
-@Composable
-fun AdminBackupScreen(
-    products: List<Product>,
-    onSaveProduct: (Product) -> Unit
-) {
-    val context = LocalContext.current
     var exportMessage by rememberSaveable { mutableStateOf("") }
+    var activeManagementView by rememberSaveable { mutableStateOf("products") }
 
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val backupManager = remember(context) { BackupManager(context) }
@@ -544,6 +447,7 @@ fun AdminBackupScreen(
                 val restoredProducts = if (mimeType == "application/zip") {
                     backupManager.importBackup(it)
                 } else {
+                    // Compatibilidad con respaldos JSON antiguos
                     val text = context.contentResolver.openInputStream(it)?.bufferedReader().use { reader -> reader?.readText() }
                     if (!text.isNullOrBlank()) {
                         val json = JSONObject(text)
@@ -585,45 +489,173 @@ fun AdminBackupScreen(
         }
     }
 
+    // Selector de imagen de la galería
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Persistir permiso de lectura para que el URI siga siendo válido tras reiniciar la app
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) { /* No todos los URIs soportan persistencia */ }
+            imageUri = it.toString()
+        }
+    }
+
+    fun resetForm() {
+        currentProduct = null
+        equipo = ""; marca = ""; modelo = ""; tipo = ""
+        precioUsdText = ""; imageUri = ""; garantia = ""; colores = ""; infoAdicional = ""
+        errorMessage = ""
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
     ) {
-        SectionTitle(text = "Administración")
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Copia de seguridad",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = "Exporta tus productos a un archivo ZIP para guardarlos o restaura un respaldo anterior desde aquí.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.size(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { exportLauncher.launch("productos-backup.zip") }) {
-                        Text("Exportar respaldo")
+            item {
+                SectionTitle(text = "Administrar productos")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TextButton(onClick = { activeManagementView = "products" }) {
+                        Text("Productos")
                     }
-                    TextButton(onClick = { importLauncher.launch(arrayOf("application/zip", "application/json")) }) {
-                        Text("Restaurar respaldo")
+                    TextButton(onClick = { activeManagementView = "backup" }) {
+                        Text("Respaldo")
+                    }
+                    TextButton(onClick = { activeManagementView = "disabled" }) {
+                        Text("Desactivados")
                     }
                 }
-                if (exportMessage.isNotBlank()) {
-                    Spacer(modifier = Modifier.size(8.dp))
+                Spacer(modifier = Modifier.size(12.dp))
+
+                if (activeManagementView == "products") {
                     Text(
-                        text = exportMessage,
+                        text = "Tasa de cambio actual: ${String.format("%.2f", exchangeRate)} CUP por USD",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    ProductManagementForm(
+                        equipo = equipo,
+                        marca = marca,
+                        modelo = modelo,
+                        tipo = tipo,
+                        precioUsdText = precioUsdText,
+                        imageUri = imageUri,
+                        garantia = garantia,
+                        colores = colores,
+                        infoAdicional = infoAdicional,
+                        errorMessage = errorMessage,
+                        onEquipoChange = { equipo = it },
+                        onMarcaChange = { marca = it },
+                        onModeloChange = { modelo = it },
+                        onTipoChange = { tipo = it },
+                        onPrecioUsdChange = { precioUsdText = it },
+                        onPickImage = {
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onClearImage = { imageUri = "" },
+                        onGarantiaChange = { garantia = it },
+                        onColoresChange = { colores = it },
+                        onInfoAdicionalChange = { infoAdicional = it },
+                        onSubmit = {
+                            val precioUsd = precioUsdText.replace(',', '.').toDoubleOrNull()
+                            if (equipo.isBlank() || precioUsd == null || imageUri.isBlank()) {
+                                errorMessage = "Los campos Equipo, Precio e Imagen son obligatorios"
+                            } else {
+                                val product = currentProduct?.copy(
+                                    equipo = equipo, marca = marca, modelo = modelo,
+                                    tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
+                                    garantia = garantia, colores = colores, infoAdicional = infoAdicional
+                                ) ?: Product(
+                                    equipo = equipo, marca = marca, modelo = modelo,
+                                    tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
+                                    garantia = garantia, colores = colores, infoAdicional = infoAdicional
+                                )
+                                onSaveProduct(product)
+                                resetForm()
+                            }
+                        },
+                        onCancel = { resetForm() },
+                        exchangeRate = exchangeRate
+                    )
+                    Spacer(modifier = Modifier.size(24.dp))
+                    Text(
+                        text = "Productos guardados (${products.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Copia de seguridad",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                text = "Exporta tus productos a un archivo JSON para guardarlos o restaura un respaldo anterior desde aquí.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.size(16.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(onClick = { exportLauncher.launch("productos-backup.zip") }) {
+                                    Text("Exportar respaldo")
+                                }
+                                TextButton(onClick = { importLauncher.launch(arrayOf("application/zip", "application/json")) }) {
+                                    Text("Restaurar respaldo")
+                                }
+                            }
+                            if (exportMessage.isNotBlank()) {
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    text = exportMessage,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.size(24.dp))
+                }
+            }
+            if (activeManagementView == "products" || activeManagementView == "disabled") {
+                val filtered = if (activeManagementView == "disabled") products.filter { !it.isActive } else products
+                items(filtered) { product ->
+                    ProductManagementItem(
+                        product = product,
+                        onEdit = {
+                            currentProduct = product
+                            equipo = product.equipo; marca = product.marca
+                            modelo = product.modelo; tipo = product.tipo
+                            precioUsdText = product.precioUsd.toString()
+                            imageUri = product.imageUrl; garantia = product.garantia
+                            colores = product.colores; infoAdicional = product.infoAdicional
+                        },
+                        onDelete = { onDeleteProduct(product) },
+                        onToggleActive = { onSaveProduct(product.copy(isActive = !product.isActive)) }
                     )
                 }
             }
