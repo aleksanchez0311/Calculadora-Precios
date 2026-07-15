@@ -1,6 +1,6 @@
-package com.example.calculadoradeprecios
+package cu.limitlesscode.calculadoradeprecios
 
-import com.example.calculadoradeprecios.data.Product
+import cu.limitlesscode.calculadoradeprecios.data.Product
 import java.text.DecimalFormat
 
 fun buildDisplayName(equipo: String, marca: String, modelo: String, tipo: String): String {

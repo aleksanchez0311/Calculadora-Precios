@@ -1,5 +1,5 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-package com.example.calculadoradeprecios
+package cu.limitlesscode.calculadoradeprecios
 
 import android.content.Intent
 import android.net.Uri
@@ -60,6 +60,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,6 +74,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -152,6 +156,7 @@ fun CalculadoraPreciosApp(viewModel: MainViewModel = viewModel()) {
                 NavHost(navController = navController, startDestination = Screen.Calculator.route) {
                     composable(Screen.Calculator.route) {
                         CalculatorScreen(
+                            viewModel = viewModel,
                             exchangeRate = exchangeRate,
                             products = products,
                             searchQuery = searchQuery,
@@ -207,8 +212,9 @@ fun BottomNavigationBar(navController: NavHostController) {
 
 @Composable
 fun CalculatorScreen(
+    viewModel: MainViewModel? = null,
     exchangeRate: Double,
-    products: List<com.example.calculadoradeprecios.data.Product>,
+    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
     searchQuery: String,
     onExchangeRateChange: (Double) -> Unit,
     onSearchQueryChange: (String) -> Unit
@@ -218,6 +224,30 @@ fun CalculatorScreen(
     var selectionMode by rememberSaveable { mutableStateOf(false) }
     var selectedIds by rememberSaveable { mutableStateOf<Set<Long>>(emptySet()) }
     val visibleProducts = products.filter { it.isActive }
+
+    // ---------- Observer del ciclo de vida para compartir secuencial ----------
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                // Al regresar de WhatsApp, si quedan productos en la cola, enviamos el siguiente
+                if (viewModel?.isSharingActive() == true) {
+                    val product = viewModel.consumeNextProduct()
+                    if (product != null) {
+                        launchShareIntent(context, product, exchangeRate, format)
+                    } else {
+                        // Salir del modo selección al terminar
+                        selectionMode = false
+                        selectedIds = emptySet()
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -245,6 +275,7 @@ fun CalculatorScreen(
                     TextButton(onClick = {
                         selectionMode = false
                         selectedIds = emptySet()
+                        viewModel?.cancelSharing()
                     }) {
                         Text("Cancelar")
                     }
@@ -299,7 +330,13 @@ fun CalculatorScreen(
                 onClick = {
                     val selectedProducts = visibleProducts.filter { selectedIds.contains(it.id) }
                     if (selectedProducts.isNotEmpty()) {
-                        shareProductsIndividually(context, selectedProducts, exchangeRate, format)
+                        // 1. Cargar la cola en el ViewModel
+                        viewModel?.startMultipleSharing(selectedProducts)
+                        // 2. Consumir y enviar el primer producto inmediatamente
+                        val firstProduct = viewModel?.consumeNextProduct()
+                        if (firstProduct != null) {
+                            launchShareIntent(context, firstProduct, exchangeRate, format)
+                        }
                     }
                 },
                 containerColor = Color(0xFF25D366),
@@ -318,13 +355,13 @@ fun CalculatorScreen(
 
 @Composable
 fun ManagementScreen(
-    products: List<com.example.calculadoradeprecios.data.Product>,
-    onSaveProduct: (com.example.calculadoradeprecios.data.Product) -> Unit,
-    onDeleteProduct: (com.example.calculadoradeprecios.data.Product) -> Unit
+    products: List<cu.limitlesscode.calculadoradeprecios.data.Product>,
+    onSaveProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit,
+    onDeleteProduct: (cu.limitlesscode.calculadoradeprecios.data.Product) -> Unit
 ) {
     val context = LocalContext.current
 
-    var currentProduct by remember { mutableStateOf<com.example.calculadoradeprecios.data.Product?>(null) }
+    var currentProduct by remember { mutableStateOf<cu.limitlesscode.calculadoradeprecios.data.Product?>(null) }
     var equipo by rememberSaveable { mutableStateOf("") }
     var marca by rememberSaveable { mutableStateOf("") }
     var modelo by rememberSaveable { mutableStateOf("") }
@@ -379,7 +416,7 @@ fun ManagementScreen(
                 val items = json.optJSONArray("products") ?: JSONArray()
                 for (i in 0 until items.length()) {
                     val item = items.getJSONObject(i)
-                    val product = com.example.calculadoradeprecios.data.Product(
+                    val product = cu.limitlesscode.calculadoradeprecios.data.Product(
                         id = item.optLong("id", 0L),
                         equipo = item.optString("equipo", ""),
                         marca = item.optString("marca", ""),
@@ -483,7 +520,7 @@ fun ManagementScreen(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
-                                ) ?: com.example.calculadoradeprecios.data.Product(
+                                ) ?: cu.limitlesscode.calculadoradeprecios.data.Product(
                                     equipo = equipo, marca = marca, modelo = modelo,
                                     tipo = tipo, precioUsd = precioUsd, imageUrl = imageUri,
                                     garantia = garantia, colores = colores, infoAdicional = infoAdicional
@@ -601,7 +638,7 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductCard(
-    product: com.example.calculadoradeprecios.data.Product,
+    product: cu.limitlesscode.calculadoradeprecios.data.Product,
     exchangeRate: Double,
     format: DecimalFormat,
     selectionMode: Boolean,
@@ -918,7 +955,7 @@ fun FormField(
 
 @Composable
 fun ProductManagementItem(
-    product: com.example.calculadoradeprecios.data.Product,
+    product: cu.limitlesscode.calculadoradeprecios.data.Product,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onToggleActive: () -> Unit
@@ -1026,14 +1063,47 @@ fun createDecimalFormat(): DecimalFormat {
     return DecimalFormat("#,##0.00", symbols)
 }
 
-fun shareProductsIndividually(context: android.content.Context, products: List<com.example.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
-    products.forEach { product ->
-        val precioCup = product.precioUsd * exchangeRate
-        val mensaje = buildShareMessage(product, format, precioCup)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
+/**
+ * Lanza un Intent para compartir un producto individual por WhatsApp.
+ * Usa ACTION_SEND para incluir imagen (si existe) + texto como caption.
+ */
+fun launchShareIntent(
+    context: android.content.Context,
+    product: cu.limitlesscode.calculadoradeprecios.data.Product,
+    exchangeRate: Double,
+    format: DecimalFormat
+) {
+    val precioCup = product.precioUsd * exchangeRate
+    val mensaje = buildShareMessage(product, format, precioCup)
+
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        if (product.imageUrl.isNotBlank()) {
+            type = "image/*"
+            putExtra(Intent.EXTRA_TEXT, mensaje)
+            val imageUri = Uri.parse(product.imageUrl)
+            putExtra(Intent.EXTRA_STREAM, imageUri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, mensaje)
+        }
+        setPackage("com.whatsapp")
+    }
+
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Fallback: si WhatsApp no está instalado, abre el enlace web
+        val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
         }
-        context.startActivity(intent)
+        context.startActivity(fallbackIntent)
+    }
+}
+
+fun shareProductsIndividually(context: android.content.Context, products: List<cu.limitlesscode.calculadoradeprecios.data.Product>, exchangeRate: Double, format: DecimalFormat) {
+    products.forEach { product ->
+        launchShareIntent(context, product, exchangeRate, format)
     }
 }
 
@@ -1043,7 +1113,7 @@ fun shareProductsIndividually(context: android.content.Context, products: List<c
 @Composable
 fun DefaultPreview() {
     val sampleProducts = listOf(
-        com.example.calculadoradeprecios.data.Product(
+        cu.limitlesscode.calculadoradeprecios.data.Product(
             id = 1, equipo = "Teléfono", marca = "Samsung",
             modelo = "Galaxy S24", tipo = "Alta gama", precioUsd = 650.0,
             garantia = "12 meses", colores = "Negro, Blanco, Azul",

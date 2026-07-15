@@ -1,10 +1,10 @@
-package com.example.calculadoradeprecios
+package cu.limitlesscode.calculadoradeprecios
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.calculadoradeprecios.data.Product
-import com.example.calculadoradeprecios.data.ProductRepository
+import cu.limitlesscode.calculadoradeprecios.data.Product
+import cu.limitlesscode.calculadoradeprecios.data.ProductRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,5 +54,50 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.updateExchangeRate(rate)
         }
+    }
+
+    // ---------- Cola de productos para compartir secuencialmente ----------
+
+    private val _sharingQueue = MutableStateFlow<List<Product>>(emptyList())
+    val sharingQueue: StateFlow<List<Product>> = _sharingQueue.asStateFlow()
+
+    private val _isSharingProcessActive = MutableStateFlow(false)
+
+    /**
+     * Inicia el proceso de envío múltiple.
+     * Almacena los productos seleccionados en una cola para enviarlos uno por uno.
+     */
+    fun startMultipleSharing(selectedProducts: List<Product>) {
+        if (selectedProducts.isEmpty()) return
+        _sharingQueue.value = selectedProducts
+        _isSharingProcessActive.value = true
+    }
+
+    /**
+     * Toma y remueve el siguiente producto de la cola.
+     * Retorna null si la cola está vacía (proceso terminado).
+     */
+    fun consumeNextProduct(): Product? {
+        val queue = _sharingQueue.value
+        if (queue.isEmpty()) {
+            _isSharingProcessActive.value = false
+            return null
+        }
+        val next = queue.first()
+        _sharingQueue.value = queue.drop(1)
+        return next
+    }
+
+    /**
+     * Indica si aún hay productos pendientes por compartir en la cola.
+     */
+    fun isSharingActive(): Boolean = _isSharingProcessActive.value
+
+    /**
+     * Cancela el proceso de compartir y vacía la cola.
+     */
+    fun cancelSharing() {
+        _sharingQueue.value = emptyList()
+        _isSharingProcessActive.value = false
     }
 }

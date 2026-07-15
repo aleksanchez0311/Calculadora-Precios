@@ -1,4 +1,4 @@
-package com.example.calculadoradeprecios.data
+package cu.limitlesscode.calculadoradeprecios.data
 
 import androidx.room.Dao
 import androidx.room.Delete

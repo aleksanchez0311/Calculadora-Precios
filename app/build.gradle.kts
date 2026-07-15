@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.calculadoradeprecios"
+    namespace = "cu.limitlesscode.calculadoradeprecios"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.calculadoradeprecios"
+        applicationId = "cu.limitlesscode.calculadoradeprecios"
         minSdk = 24
         targetSdk = 34
         versionCode = 2

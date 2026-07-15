@@ -1,4 +1,4 @@
-package com.example.calculadoradeprecios.data
+package cu.limitlesscode.calculadoradeprecios.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
