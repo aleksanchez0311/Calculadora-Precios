@@ -27,3 +27,5 @@ google-services.json
 # Build files
 **/build/
 RESUMEN.md
+/.vscode/settings.json
+/.idea/
