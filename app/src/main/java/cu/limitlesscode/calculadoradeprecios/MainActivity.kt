@@ -399,7 +399,8 @@ fun CalculatorScreen(
 fun ManagementScreen(
     products: List<Product>,
     onSaveProduct: (Product) -> Unit,
-    onDeleteProduct: (Product) -> Unit
+    onDeleteProduct: (Product) -> Unit,
+    exchangeRate: Double = 1.0
 ) {
     val context = LocalContext.current
 
@@ -541,7 +542,7 @@ fun ManagementScreen(
 
                 if (activeManagementView == "products") {
                     Text(
-                        text = "Tasa de cambio actual: ${String.format("%.2f", exchangeRate ?: 1.0)} CUP por USD",
+                        text = "Tasa de cambio actual: ${String.format("%.2f", exchangeRate)} CUP por USD",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
@@ -904,7 +905,7 @@ fun ProductManagementForm(
             )
             Spacer(modifier = Modifier.size(8.dp))
             CupToUsdConverter(exchangeRate = exchangeRate, onUsdCalculated = { usd ->
-                onPrecioUsdChange(if (usd % 1 == 0) usd.toInt().toString() else usd.toString())
+                onPrecioUsdChange(if (usd % 1 == 0.0) usd.toInt().toString() else usd.toString())
             })
             Spacer(modifier = Modifier.size(12.dp))
 
