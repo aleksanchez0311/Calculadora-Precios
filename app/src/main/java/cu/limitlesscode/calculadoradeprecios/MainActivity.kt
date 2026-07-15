@@ -93,6 +93,8 @@ import coil.compose.AsyncImage
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import cu.limitlesscode.calculadoradeprecios.data.BackupManager
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -375,34 +377,23 @@ fun ManagementScreen(
     var exportMessage by rememberSaveable { mutableStateOf("") }
     var activeManagementView by rememberSaveable { mutableStateOf("products") }
 
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val backupManager = remember(context) { BackupManager(context) }
+
     val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
+        contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri: Uri? ->
         uri?.let {
-            val json = JSONObject()
-            val items = JSONArray()
-            products.forEach { product ->
-                val item = JSONObject().apply {
-                    put("id", product.id)
-                    put("equipo", product.equipo)
-                    put("marca", product.marca)
-                    put("modelo", product.modelo)
-                    put("tipo", product.tipo)
-                    put("precioUsd", product.precioUsd)
-                    put("isActive", product.isActive)
-                    put("imageUrl", product.imageUrl)
-                    put("garantia", product.garantia)
-                    put("colores", product.colores)
-                    put("infoAdicional", product.infoAdicional)
+            coroutineScope.launch {
+                val success = backupManager.exportBackup(products, it)
+                if (success) {
+                    exportMessage = "Exportación creada correctamente"
+                    Toast.makeText(context, "Respaldo con imágenes guardado", Toast.LENGTH_SHORT).show()
+                } else {
+                    exportMessage = "Error al exportar"
+                    Toast.makeText(context, "Error al crear respaldo", Toast.LENGTH_SHORT).show()
                 }
-                items.put(item)
             }
-            json.put("products", items)
-            context.contentResolver.openOutputStream(uri)?.use { output ->
-                output.write(json.toString(2).toByteArray())
-            }
-            exportMessage = "Exportación creada correctamente"
-            Toast.makeText(context, "Archivo de exportación guardado", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -410,29 +401,49 @@ fun ManagementScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let {
-            val text = context.contentResolver.openInputStream(uri)?.bufferedReader().use { it?.readText() }
-            if (!text.isNullOrBlank()) {
-                val json = JSONObject(text)
-                val items = json.optJSONArray("products") ?: JSONArray()
-                for (i in 0 until items.length()) {
-                    val item = items.getJSONObject(i)
-                    val product = cu.limitlesscode.calculadoradeprecios.data.Product(
-                        id = item.optLong("id", 0L),
-                        equipo = item.optString("equipo", ""),
-                        marca = item.optString("marca", ""),
-                        modelo = item.optString("modelo", ""),
-                        tipo = item.optString("tipo", ""),
-                        precioUsd = item.optDouble("precioUsd", 0.0),
-                        isActive = item.optBoolean("isActive", true),
-                        imageUrl = item.optString("imageUrl", ""),
-                        garantia = item.optString("garantia", ""),
-                        colores = item.optString("colores", ""),
-                        infoAdicional = item.optString("infoAdicional", "")
-                    )
-                    onSaveProduct(product)
+            coroutineScope.launch {
+                val mimeType = context.contentResolver.getType(it)
+                val restoredProducts = if (mimeType == "application/zip") {
+                    backupManager.importBackup(it)
+                } else {
+                    // Compatibilidad con respaldos JSON antiguos
+                    val text = context.contentResolver.openInputStream(it)?.bufferedReader().use { reader -> reader?.readText() }
+                    if (!text.isNullOrBlank()) {
+                        val json = JSONObject(text)
+                        val items = json.optJSONArray("products") ?: JSONArray()
+                        val products = mutableListOf<cu.limitlesscode.calculadoradeprecios.data.Product>()
+                        for (i in 0 until items.length()) {
+                            val item = items.getJSONObject(i)
+                            products.add(
+                                cu.limitlesscode.calculadoradeprecios.data.Product(
+                                    id = item.optLong("id", 0L),
+                                    equipo = item.optString("equipo", ""),
+                                    marca = item.optString("marca", ""),
+                                    modelo = item.optString("modelo", ""),
+                                    tipo = item.optString("tipo", ""),
+                                    precioUsd = item.optDouble("precioUsd", 0.0),
+                                    isActive = item.optBoolean("isActive", true),
+                                    imageUrl = item.optString("imageUrl", ""),
+                                    garantia = item.optString("garantia", ""),
+                                    colores = item.optString("colores", ""),
+                                    infoAdicional = item.optString("infoAdicional", "")
+                                )
+                            )
+                        }
+                        products
+                    } else null
                 }
-                exportMessage = "Importación completada"
-                Toast.makeText(context, "Productos importados", Toast.LENGTH_SHORT).show()
+
+                if (restoredProducts != null) {
+                    restoredProducts.forEach { product ->
+                        onSaveProduct(product)
+                    }
+                    exportMessage = "Importación completada"
+                    Toast.makeText(context, "Respaldo restaurado correctamente", Toast.LENGTH_SHORT).show()
+                } else {
+                    exportMessage = "Error al importar"
+                    Toast.makeText(context, "Error al restaurar respaldo", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -559,10 +570,10 @@ fun ManagementScreen(
                             )
                             Spacer(modifier = Modifier.size(16.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Button(onClick = { exportLauncher.launch("productos-export.json") }) {
+                                Button(onClick = { exportLauncher.launch("productos-backup.zip") }) {
                                     Text("Exportar respaldo")
                                 }
-                                TextButton(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
+                                TextButton(onClick = { importLauncher.launch(arrayOf("application/zip", "application/json")) }) {
                                     Text("Restaurar respaldo")
                                 }
                             }
