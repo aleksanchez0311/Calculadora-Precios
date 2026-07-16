@@ -1,4 +1,31 @@
 import java.util.Properties
+import java.io.ByteArrayOutputStream
+
+fun getVersionCodeFromGit(): Int {
+    return try {
+        val stdout = ByteArrayOutputStream()
+        project.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = stdout
+        }
+        stdout.toString().trim().toInt()
+    } catch (e: Exception) {
+        1
+    }
+}
+
+fun getVersionNameFromGit(): String {
+    return try {
+        val stdout = ByteArrayOutputStream()
+        project.exec {
+            commandLine("git", "describe", "--tags", "--always", "--dirty")
+            standardOutput = stdout
+        }
+        stdout.toString().trim().removePrefix("v")
+    } catch (e: Exception) {
+        "1.0"
+    }
+}
 
 plugins {
     id("com.android.application")
@@ -14,8 +41,8 @@ android {
         applicationId = "cu.limitlesscode.calculadoradeprecios"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.5.7"
+        versionCode = getVersionCodeFromGit()
+        versionName = getVersionNameFromGit()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
