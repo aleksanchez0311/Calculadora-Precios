@@ -15,6 +15,9 @@ interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: Product)
 
+    @Query("DELETE FROM products")
+    suspend fun deleteAllProducts()
+
     @Delete
     suspend fun deleteProduct(product: Product)
 }

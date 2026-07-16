@@ -33,7 +33,11 @@ class SettingsFragment : Fragment() {
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         uri?.let {
             lifecycleScope.launch {
-                val success = backupManager.exportBackup(viewModel.products.value, it)
+                val success = backupManager.exportBackup(
+                    viewModel.products.value,
+                    viewModel.exchangeRate.value,
+                    it
+                )
                 if (success) {
                     Toast.makeText(requireContext(), "Respaldo guardado", Toast.LENGTH_SHORT).show()
                 }
@@ -44,38 +48,26 @@ class SettingsFragment : Fragment() {
     private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             lifecycleScope.launch {
-                val mimeType = requireContext().contentResolver.getType(it)
-                val restored = if (mimeType == "application/zip") {
-                    backupManager.importBackup(it)
+                val backupData = backupManager.importBackup(it)
+                if (backupData != null) {
+                    showRestoreConfirmationDialog(backupData)
                 } else {
-                    val text = requireContext().contentResolver.openInputStream(it)?.bufferedReader().use { r -> r?.readText() }
-                    if (!text.isNullOrBlank()) {
-                        val json = JSONObject(text)
-                        val items = json.optJSONArray("products") ?: JSONArray()
-                        val list = mutableListOf<Product>()
-                        for (i in 0 until items.length()) {
-                            val item = items.getJSONObject(i)
-                            list.add(Product(
-                                id = item.optLong("id", 0L),
-                                equipo = item.optString("equipo", ""),
-                                marca = item.optString("marca", ""),
-                                modelo = item.optString("modelo", ""),
-                                tipo = item.optString("tipo", ""),
-                                precioUsd = item.optDouble("precioUsd", 0.0),
-                                isActive = item.optBoolean("isActive", true),
-                                imageUrl = item.optString("imageUrl", ""),
-                                garantia = item.optString("garantia", ""),
-                                colores = item.optString("colores", ""),
-                                infoAdicional = item.optString("infoAdicional", "")
-                            ))
-                        }
-                        list
-                    } else null
+                    Toast.makeText(requireContext(), "Error al leer el respaldo", Toast.LENGTH_SHORT).show()
                 }
-                restored?.forEach { p -> viewModel.saveProduct(p) }
-                if (restored != null) Toast.makeText(requireContext(), "Importación completada", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun showRestoreConfirmationDialog(data: cu.limitlesscode.calculadoradeprecios.data.BackupData) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Confirmar Restauración")
+            .setMessage("Esta acción eliminará TODOS los productos actuales y los reemplazará con los del respaldo. ¿Desea continuar?")
+            .setPositiveButton("Restaurar") { _, _ ->
+                viewModel.restoreBackup(data)
+                Toast.makeText(requireContext(), "Restauración completada", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     override fun onCreateView(

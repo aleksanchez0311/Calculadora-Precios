@@ -56,6 +56,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun restoreBackup(backupData: cu.limitlesscode.calculadoradeprecios.data.BackupData) {
+        viewModelScope.launch {
+            repository.deleteAllProducts()
+            backupData.products.forEach { repository.saveProduct(it) }
+            repository.updateExchangeRate(backupData.exchangeRate)
+        }
+    }
+
     // ---------- Cola de productos para compartir secuencialmente ----------
 
     private val _sharingQueue = MutableStateFlow<List<Product>>(emptyList())

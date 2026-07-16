@@ -33,6 +33,10 @@ class ProductRepository(context: Context) {
         dao.insertProduct(product)
     }
 
+    suspend fun deleteAllProducts() {
+        dao.deleteAllProducts()
+    }
+
     suspend fun deleteProduct(product: Product) {
         dao.deleteProduct(product)
     }

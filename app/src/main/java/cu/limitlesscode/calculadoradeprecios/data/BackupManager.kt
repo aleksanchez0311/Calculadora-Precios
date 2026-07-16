@@ -7,14 +7,23 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
+data class BackupData(
+    val products: List<Product>,
+    val exchangeRate: Double
+)
+
 class BackupManager(private val context: Context) {
 
-    suspend fun exportBackup(products: List<Product>, outputUri: Uri): Boolean = withContext(Dispatchers.IO) {
+    suspend fun exportBackup(
+        products: List<Product>,
+        exchangeRate: Double,
+        outputUri: Uri
+    ): Boolean = withContext(Dispatchers.IO) {
         return@withContext try {
             val json = JSONObject()
             val items = JSONArray()
@@ -46,6 +55,7 @@ class BackupManager(private val context: Context) {
             }
 
             json.put("products", items)
+            json.put("exchangeRate", exchangeRate)
 
             // Crear ZIP con JSON e imágenes
             context.contentResolver.openOutputStream(outputUri)?.use { output ->
@@ -74,12 +84,28 @@ class BackupManager(private val context: Context) {
         }
     }
 
-    suspend fun importBackup(inputUri: Uri): List<Product>? = withContext(Dispatchers.IO) {
+    suspend fun importBackup(inputUri: Uri): BackupData? = withContext(Dispatchers.IO) {
         return@withContext try {
-            val tempDir = File(context.cacheDir, "restore_temp").apply { mkdirs() }
-            tempDir.deleteRecursively()
-            tempDir.mkdirs()
+            val mimeType = context.contentResolver.getType(inputUri)
+            val isZip = mimeType == "application/zip" || inputUri.path?.endsWith(".zip", true) == true
 
+            if (isZip) {
+                processZipBackup(inputUri)
+            } else {
+                processJsonBackup(inputUri)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private suspend fun processZipBackup(inputUri: Uri): BackupData? = withContext(Dispatchers.IO) {
+        val tempDir = File(context.cacheDir, "restore_temp").apply { mkdirs() }
+        tempDir.deleteRecursively()
+        tempDir.mkdirs()
+
+        try {
             // Extraer ZIP
             context.contentResolver.openInputStream(inputUri)?.use { input ->
                 ZipInputStream(input).use { zipIn ->
@@ -100,10 +126,13 @@ class BackupManager(private val context: Context) {
                 }
             }
 
-            // Leer JSON
-            val backupJson = File(tempDir, "backup.json").bufferedReader().readText()
+            val backupJsonFile = File(tempDir, "backup.json")
+            if (!backupJsonFile.exists()) return@withContext null
+
+            val backupJson = backupJsonFile.bufferedReader().readText()
             val json = JSONObject(backupJson)
             val items = json.optJSONArray("products") ?: JSONArray()
+            val exchangeRate = json.optDouble("exchangeRate", 1.0)
 
             val products = mutableListOf<Product>()
             val imagesDir = File(tempDir, "images")
@@ -114,35 +143,55 @@ class BackupManager(private val context: Context) {
                 val newImageUri = if (imageFileName.isNotBlank()) {
                     val tempImage = File(imagesDir, imageFileName)
                     if (tempImage.exists()) {
-                        // Guardar imagen en almacenamiento interno persistente
                         val savedUri = saveImageToInternalStorage(tempImage)
                         savedUri.toString()
                     } else ""
                 } else ""
 
-                products.add(
-                    Product(
-                        id = 0L,
-                        equipo = item.optString("equipo", ""),
-                        marca = item.optString("marca", ""),
-                        modelo = item.optString("modelo", ""),
-                        tipo = item.optString("tipo", ""),
-                        precioUsd = item.optDouble("precioUsd", 0.0),
-                        isActive = item.optBoolean("isActive", true),
-                        imageUrl = newImageUri,
-                        garantia = item.optString("garantia", ""),
-                        colores = item.optString("colores", ""),
-                        infoAdicional = item.optString("infoAdicional", "")
-                    )
-                )
+                products.add(parseProductFromJson(item, newImageUri))
             }
 
+            BackupData(products, exchangeRate)
+        } finally {
             tempDir.deleteRecursively()
-            products
+        }
+    }
+
+    private suspend fun processJsonBackup(inputUri: Uri): BackupData? = withContext(Dispatchers.IO) {
+        try {
+            val text = context.contentResolver.openInputStream(inputUri)?.bufferedReader()?.use { it.readText() }
+            if (text.isNullOrBlank()) return@withContext null
+
+            val json = JSONObject(text)
+            val items = json.optJSONArray("products") ?: JSONArray()
+            val exchangeRate = json.optDouble("exchangeRate", 1.0)
+            val list = mutableListOf<Product>()
+
+            for (i in 0 until items.length()) {
+                val item = items.getJSONObject(i)
+                list.add(parseProductFromJson(item, item.optString("imageUrl", "")))
+            }
+            BackupData(list, exchangeRate)
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
+    }
+
+    private fun parseProductFromJson(item: JSONObject, imageUrl: String): Product {
+        return Product(
+            id = 0L, // Siempre 0 para insertar como nuevo en Room tras limpiar
+            equipo = item.optString("equipo", ""),
+            marca = item.optString("marca", ""),
+            modelo = item.optString("modelo", ""),
+            tipo = item.optString("tipo", ""),
+            precioUsd = item.optDouble("precioUsd", 0.0),
+            isActive = item.optBoolean("isActive", true),
+            imageUrl = imageUrl,
+            garantia = item.optString("garantia", ""),
+            colores = item.optString("colores", ""),
+            infoAdicional = item.optString("infoAdicional", "")
+        )
     }
 
     private fun copyImageToTemp(uri: Uri, destDir: File): String {
