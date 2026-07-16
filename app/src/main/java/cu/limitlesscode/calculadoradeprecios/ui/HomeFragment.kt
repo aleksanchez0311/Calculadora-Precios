@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -11,8 +12,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import cu.limitlesscode.calculadoradeprecios.FilterField
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
 import cu.limitlesscode.calculadoradeprecios.R
+import cu.limitlesscode.calculadoradeprecios.SortField
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
@@ -75,6 +79,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupButtons() {
+        binding.btnFilter.setOnClickListener { showFilterDialog() }
+        binding.btnSort.setOnClickListener { showSortDialog() }
 
         binding.btnSelectAll.setOnClickListener {
             val currentList = adapter.currentList
@@ -161,6 +167,70 @@ class HomeFragment : Fragment() {
         } else {
             binding.fabAction.visibility = View.GONE
         }
+    }
+
+    private fun showFilterDialog() {
+        val options = arrayOf(
+            getString(R.string.filter_all),
+            getString(R.string.filter_equipo),
+            getString(R.string.filter_brand),
+            getString(R.string.filter_model),
+            getString(R.string.filter_type)
+        )
+        val fields = FilterField.values()
+        val current = fields.indexOf(viewModel.filterField.value)
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.dialog_title_filter)
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                viewModel.setFilterField(fields[which])
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showSortDialog() {
+        val options = arrayOf(
+            getString(R.string.sort_equipo_asc),
+            getString(R.string.sort_equipo_desc),
+            getString(R.string.sort_brand_asc),
+            getString(R.string.sort_brand_desc),
+            getString(R.string.sort_model),
+            getString(R.string.sort_type),
+            getString(R.string.sort_price_asc),
+            getString(R.string.sort_price_desc)
+        )
+
+        // Map index to (Field, Ascending)
+        val sortConfigs = arrayOf(
+            SortField.EQUIPO to true,
+            SortField.EQUIPO to false,
+            SortField.MARCA to true,
+            SortField.MARCA to false,
+            SortField.MODELO to true,
+            SortField.TIPO to true,
+            SortField.PRECIO to true,
+            SortField.PRECIO to false
+        )
+
+        // Find current selection
+        var current = -1
+        for (i in sortConfigs.indices) {
+            if (sortConfigs[i].first == viewModel.sortField.value && 
+                sortConfigs[i].second == viewModel.sortAscending.value) {
+                current = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.dialog_title_sort)
+            .setSingleChoiceItems(options, current) { dialog, which ->
+                val (field, asc) = sortConfigs[which]
+                viewModel.setSort(field, asc)
+                dialog.dismiss()
+            }
+            .show()
     }
 
     override fun onResume() {

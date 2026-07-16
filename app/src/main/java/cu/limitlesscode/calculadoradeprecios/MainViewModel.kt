@@ -13,29 +13,76 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 
+enum class SortField { EQUIPO, MARCA, MODELO, TIPO, PRECIO }
+enum class FilterField { TODOS, EQUIPO, MARCA, MODELO, TIPO }
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = ProductRepository(application)
+    
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _sortField = MutableStateFlow(SortField.MARCA)
+    val sortField: StateFlow<SortField> = _sortField.asStateFlow()
+
+    private val _sortAscending = MutableStateFlow(true)
+    val sortAscending: StateFlow<Boolean> = _sortAscending.asStateFlow()
+
+    private val _filterField = MutableStateFlow(FilterField.TODOS)
+    val filterField: StateFlow<FilterField> = _filterField.asStateFlow()
 
     val exchangeRate: StateFlow<Double> = repository.exchangeRateFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, 1.0)
 
-    val products: StateFlow<List<Product>> = combine(repository.productsFlow, _searchQuery) { products, query ->
-        if (query.isBlank()) {
+    val products: StateFlow<List<Product>> = combine(
+        repository.productsFlow, 
+        _searchQuery, 
+        _sortField, 
+        _sortAscending, 
+        _filterField
+    ) { products, query, sort, ascending, filter ->
+        val filtered = if (query.isBlank()) {
             products
         } else {
             products.filter { product ->
-                product.equipo.contains(query, ignoreCase = true) ||
-                    product.marca.contains(query, ignoreCase = true) ||
-                    product.modelo.contains(query, ignoreCase = true) ||
-                    product.tipo.contains(query, ignoreCase = true)
+                when (filter) {
+                    FilterField.TODOS -> {
+                        product.equipo.contains(query, ignoreCase = true) ||
+                                product.marca.contains(query, ignoreCase = true) ||
+                                product.modelo.contains(query, ignoreCase = true) ||
+                                product.tipo.contains(query, ignoreCase = true)
+                    }
+                    FilterField.EQUIPO -> product.equipo.contains(query, ignoreCase = true)
+                    FilterField.MARCA -> product.marca.contains(query, ignoreCase = true)
+                    FilterField.MODELO -> product.modelo.contains(query, ignoreCase = true)
+                    FilterField.TIPO -> product.tipo.contains(query, ignoreCase = true)
+                }
             }
         }
+
+        val sorted = when (sort) {
+            SortField.EQUIPO -> filtered.sortedBy { it.equipo.lowercase() }
+            SortField.MARCA -> filtered.sortedWith(compareBy<Product> { it.marca.lowercase() }.thenBy { it.modelo.lowercase() })
+            SortField.MODELO -> filtered.sortedBy { it.modelo.lowercase() }
+            SortField.TIPO -> filtered.sortedBy { it.tipo.lowercase() }
+            SortField.PRECIO -> filtered.sortedBy { it.precioUsd }
+        }
+
+        if (ascending) sorted else sorted.reversed()
+        
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun setSort(field: SortField, ascending: Boolean) {
+        _sortField.value = field
+        _sortAscending.value = ascending
+    }
+
+    fun setFilterField(field: FilterField) {
+        _filterField.value = field
     }
 
     fun saveProduct(product: Product) {

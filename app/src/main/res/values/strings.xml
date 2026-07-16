@@ -69,6 +69,25 @@
     <string name="settings_backup_option_export">Exportar productos</string>
     <string name="settings_backup_option_restore">Restaurar respaldo</string>
 
+    <!-- Filter & Sort -->
+    <string name="action_filter">Filtrar</string>
+    <string name="action_sort">Ordenar</string>
+    <string name="dialog_title_filter">Filtrar por campo</string>
+    <string name="dialog_title_sort">Ordenar lista</string>
+    <string name="filter_all">Todos los campos</string>
+    <string name="filter_equipo">Equipo</string>
+    <string name="filter_brand">Marca</string>
+    <string name="filter_model">Modelo</string>
+    <string name="filter_type">Tipo</string>
+    <string name="sort_equipo_asc">Equipo (A-Z)</string>
+    <string name="sort_equipo_desc">Equipo (Z-A)</string>
+    <string name="sort_brand_asc">Marca (A-Z)</string>
+    <string name="sort_brand_desc">Marca (Z-A)</string>
+    <string name="sort_price_asc">Precio (Menor a mayor)</string>
+    <string name="sort_price_desc">Precio (Mayor a menor)</string>
+    <string name="sort_model">Modelo</string>
+    <string name="sort_type">Tipo</string>
+
     <!-- Product Item Labels -->
     <string name="product_label_usd">💵 USD: %1$s</string>
     <string name="product_label_cup">💰 CUP: %1$s</string>
