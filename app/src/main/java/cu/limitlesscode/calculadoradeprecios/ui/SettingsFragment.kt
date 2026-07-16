@@ -94,6 +94,11 @@ class SettingsFragment : Fragment() {
                 viewModel.updateExchangeRate(rate)
             }
         }
+
+        binding.etWhatsappNumber.setText(viewModel.whatsappNumber.value)
+        binding.etWhatsappNumber.addTextChangedListener { text ->
+            viewModel.updateWhatsappNumber(text.toString())
+        }
     }
 
     private fun setupBackup() {

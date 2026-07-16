@@ -43,6 +43,8 @@
     <!-- Settings Screen -->
     <string name="settings_exchange_rate_title">Tasa de cambio USD → CUP</string>
     <string name="settings_exchange_rate_hint">Tasa de cambio</string>
+    <string name="settings_whatsapp_number_title">Número de WhatsApp (Frecuente)</string>
+    <string name="settings_whatsapp_number_hint">Ej: 535261...</string>
     <string name="settings_backup_title">Respaldo y restauración</string>
     <string name="settings_backup_button">Iniciar</string>
 
@@ -104,7 +106,8 @@
     <string name="share_dialog_title">Compartir múltiples productos</string>
     <string name="share_option_individual">Individual (Con imagen, uno a uno)</string>
     <string name="share_option_summary">Resumen (Texto único de todos)</string>
-    <string name="share_option_batch">Lote de imágenes (Todas las fotos)</string>
+    <string name="share_option_batch">Lote de imágenes (Solo fotos)</string>
+    <string name="share_option_overlay">Lote con Info (Un solo envío)</string>
     <string name="share_summary_header">📦 Catálogo de Productos 📦\n---------------------------</string>
     <string name="share_summary_item">✅ %1$s\n💰 Precio: %2$s / %3$s\n</string>
 </resources>

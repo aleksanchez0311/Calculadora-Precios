@@ -21,6 +21,7 @@ import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchBatchShareIntent
+import cu.limitlesscode.calculadoradeprecios.launchOverlayBatchShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchSummaryShareIntent
 import kotlinx.coroutines.launch
@@ -61,7 +62,13 @@ class HomeFragment : Fragment() {
             exchangeRate = viewModel.exchangeRate.value,
             format = format,
             onShareClick = { product, precioCup ->
-                launchShareIntent(requireContext(), product, viewModel.exchangeRate.value, format)
+                launchShareIntent(
+                    requireContext(), 
+                    product, 
+                    viewModel.exchangeRate.value, 
+                    format,
+                    viewModel.whatsappNumber.value
+                )
             },
             onLongClick = { product ->
                 enterSelectionMode(product.id)
@@ -108,8 +115,11 @@ class HomeFragment : Fragment() {
         val options = arrayOf(
             getString(R.string.share_option_individual),
             getString(R.string.share_option_summary),
-            getString(R.string.share_option_batch)
+            getString(R.string.share_option_batch),
+            getString(R.string.share_option_overlay)
         )
+
+        val target = viewModel.whatsappNumber.value
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.share_dialog_title)
@@ -119,16 +129,22 @@ class HomeFragment : Fragment() {
                         viewModel.startMultipleSharing(products)
                         val first = viewModel.consumeNextProduct()
                         if (first != null) {
-                            launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format)
+                            launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format, target)
                         }
                     }
                     1 -> { // Summary
-                        launchSummaryShareIntent(requireContext(), products, viewModel.exchangeRate.value, format)
+                        launchSummaryShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
                         exitSelectionMode()
                     }
                     2 -> { // Batch
-                        launchBatchShareIntent(requireContext(), products)
+                        launchBatchShareIntent(requireContext(), products, target)
                         exitSelectionMode()
+                    }
+                    3 -> { // Overlay
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            launchOverlayBatchShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
+                            exitSelectionMode()
+                        }
                     }
                 }
             }
@@ -269,7 +285,13 @@ class HomeFragment : Fragment() {
         if (viewModel.isSharingActive()) {
             val product = viewModel.consumeNextProduct()
             if (product != null) {
-                launchShareIntent(requireContext(), product, viewModel.exchangeRate.value, format)
+                launchShareIntent(
+                    requireContext(), 
+                    product, 
+                    viewModel.exchangeRate.value, 
+                    format,
+                    viewModel.whatsappNumber.value
+                )
             } else {
                 exitSelectionMode()
             }

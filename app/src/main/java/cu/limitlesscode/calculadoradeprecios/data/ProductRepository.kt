@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import kotlinx.coroutines.flow.Flow
@@ -22,11 +23,16 @@ class ProductRepository(context: Context) {
     private val dao = database.productDao()
 
     private val EXCHANGE_RATE_KEY = doublePreferencesKey("exchange_rate_usd_to_cup")
+    private val WHATSAPP_NUMBER_KEY = stringPreferencesKey("whatsapp_target_number")
 
     val productsFlow: Flow<List<Product>> = dao.getAllProducts()
 
     val exchangeRateFlow: Flow<Double> = appContext.dataStore.data
         .map { preferences -> preferences[EXCHANGE_RATE_KEY] ?: 1.0 }
+        .distinctUntilChanged()
+
+    val whatsappNumberFlow: Flow<String> = appContext.dataStore.data
+        .map { preferences -> preferences[WHATSAPP_NUMBER_KEY] ?: "" }
         .distinctUntilChanged()
 
     suspend fun saveProduct(product: Product) {
@@ -44,6 +50,12 @@ class ProductRepository(context: Context) {
     suspend fun updateExchangeRate(rate: Double) {
         appContext.dataStore.edit { preferences ->
             preferences[EXCHANGE_RATE_KEY] = rate
+        }
+    }
+
+    suspend fun updateWhatsappNumber(number: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences[WHATSAPP_NUMBER_KEY] = number
         }
     }
 }

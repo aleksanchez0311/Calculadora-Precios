@@ -34,6 +34,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val exchangeRate: StateFlow<Double> = repository.exchangeRateFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, 1.0)
 
+    val whatsappNumber: StateFlow<String> = repository.whatsappNumberFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     val products: StateFlow<List<Product>> = combine(
         repository.productsFlow, 
         _searchQuery, 
@@ -100,6 +103,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateExchangeRate(rate: Double) {
         viewModelScope.launch {
             repository.updateExchangeRate(rate)
+        }
+    }
+
+    fun updateWhatsappNumber(number: String) {
+        viewModelScope.launch {
+            repository.updateWhatsappNumber(number)
         }
     }
 
