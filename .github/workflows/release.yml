@@ -28,8 +28,9 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
 
       - name: Decode Keystore
         env:
@@ -47,16 +48,16 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [ -f app/keystore.jks ]; then
-            gradle assembleRelease
+            ./gradlew assembleRelease
           else
-            gradle assembleDebug
+            ./gradlew assembleDebug
           fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: app/build/outputs/apk/*/app-*.apk
+          path: app/build/outputs/apk/**/*.apk
 
   release:
     needs: build

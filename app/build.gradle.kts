@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -19,13 +21,20 @@ android {
     }
 
     signingConfigs {
-        val keystoreFile = System.getenv("KEYSTORE_FILE")
+        val keystorePropertiesFile = rootProject.file("keystore.properties")
+        val keystoreProperties = Properties()
+        if (keystorePropertiesFile.exists()) {
+            keystoreProperties.load(keystorePropertiesFile.inputStream())
+        }
+
+        val keystoreFile = keystoreProperties.getProperty("KEYSTORE_FILE") ?: System.getenv("KEYSTORE_FILE")
+        
         if (!keystoreFile.isNullOrEmpty()) {
             create("release") {
                 storeFile = file(keystoreFile)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storePassword = keystoreProperties.getProperty("KEYSTORE_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = keystoreProperties.getProperty("KEY_ALIAS") ?: System.getenv("KEY_ALIAS")
+                keyPassword = keystoreProperties.getProperty("KEY_PASSWORD") ?: System.getenv("KEY_PASSWORD")
             }
         }
     }
@@ -34,9 +43,10 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            val keystoreFile = System.getenv("KEYSTORE_FILE")
-            if (!keystoreFile.isNullOrEmpty()) {
-                signingConfig = signingConfigs.getByName("release")
+            
+            // Apply signing configuration if it exists
+            signingConfigs.findByName("release")?.let {
+                signingConfig = it
             }
         }
     }

@@ -23,6 +23,7 @@ google-services.json
 # Keystore
 *.jks
 *.keystore
+keystore.properties
 
 # Build files
 **/build/
