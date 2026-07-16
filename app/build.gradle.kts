@@ -14,8 +14,8 @@ android {
         applicationId = "cu.limitlesscode.calculadoradeprecios"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.5.6"
+        versionCode = 1
+        versionName = "1.5.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
