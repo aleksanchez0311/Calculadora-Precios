@@ -90,27 +90,27 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginVertical="8dp"
-                    android:background="#EEEEEE" />
+                    android:background="?attr/colorOutlineVariant" />
 
                 <TextView
                     android:id="@+id/tv_garantia"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#808080"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tv_colores"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#808080"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/tv_info_adicional"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#808080"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
             </LinearLayout>
 
