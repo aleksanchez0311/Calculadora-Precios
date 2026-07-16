@@ -3,7 +3,7 @@
 
     <!-- Navigation -->
     <string name="nav_home">Inicio</string>
-    <string name="nav_management">Administración</string>
+    <string name="nav_management">Productos</string>
     <string name="nav_settings">Configuración</string>
 
     <!-- Actions -->
