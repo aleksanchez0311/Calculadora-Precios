@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -30,6 +31,7 @@ class ManagementFragment : Fragment() {
     private lateinit var adapter: ProductManagementAdapter
     private var currentProduct: Product? = null
     private var imageUri: String = ""
+    private var preciseUsdValue: Double? = null
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let {
@@ -78,12 +80,28 @@ class ManagementFragment : Fragment() {
         }
         binding.btnSave.setOnClickListener { saveProduct() }
         binding.btnCancel.setOnClickListener { resetForm() }
+
+        binding.etCupCalc.addTextChangedListener { text ->
+            val cup = text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0
+            val rate = viewModel.exchangeRate.value
+            if (rate > 0 && cup > 0) {
+                val usd = cup / rate
+                binding.tvUsdCalcResult.text = String.format("USD aprox: %.2f", usd).replace('.', ',')
+            } else {
+                binding.tvUsdCalcResult.text = getString(R.string.calc_result_default)
+            }
+        }
+
+        binding.etPrecio.addTextChangedListener { text ->
+            preciseUsdValue = text.toString().replace(',', '.').toDoubleOrNull()
+        }
         
         binding.btnUseUsd.setOnClickListener {
             val cup = binding.etCupCalc.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0
             val rate = viewModel.exchangeRate.value
-            if (rate > 0) {
+            if (rate > 0 && cup > 0) {
                 val usd = cup / rate
+                preciseUsdValue = usd
                 binding.etPrecio.setText(String.format("%.2f", usd).replace('.', ','))
             }
         }
@@ -109,7 +127,11 @@ class ManagementFragment : Fragment() {
         binding.etMarca.setText(product.marca)
         binding.etModelo.setText(product.modelo)
         binding.etTipo.setText(product.tipo)
-        binding.etPrecio.setText(product.precioUsd.toString())
+        // Mostrar redondeado en la UI
+        binding.etPrecio.setText(String.format("%.2f", product.precioUsd).replace('.', ','))
+        // Pero mantener la precisión interna
+        preciseUsdValue = product.precioUsd
+        
         binding.etInfo.setText(product.infoAdicional)
         binding.etGarantia.setText(product.garantia)
         binding.etColores.setText(product.colores)
@@ -120,8 +142,10 @@ class ManagementFragment : Fragment() {
 
     private fun saveProduct() {
         val equipo = binding.etEquipo.text.toString()
-        val precio = binding.etPrecio.text.toString().replace(',', '.').toDoubleOrNull()
+        val displayPrice = binding.etPrecio.text.toString().replace(',', '.').toDoubleOrNull()
         
+        val precio = preciseUsdValue ?: displayPrice
+
         if (equipo.isBlank() || precio == null || imageUri.isBlank()) {
             binding.tvError.text = getString(R.string.mgmt_error_required)
             binding.tvError.visibility = View.VISIBLE
@@ -155,6 +179,8 @@ class ManagementFragment : Fragment() {
         binding.etGarantia.text?.clear()
         binding.etColores.text?.clear()
         imageUri = ""
+        preciseUsdValue = null
+        binding.etCupCalc.text?.clear()
         updateImagePreview()
         binding.tvError.visibility = View.GONE
         showForm(false)
