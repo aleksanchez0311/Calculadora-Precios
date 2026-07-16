@@ -99,4 +99,12 @@
     <string name="mgmt_label_status_active">Estado: activo</string>
     <string name="mgmt_label_status_inactive">Estado: desactivado</string>
     <string name="mgmt_label_garanty">Garantía: %1$s</string>
+
+    <!-- Sharing Options -->
+    <string name="share_dialog_title">Compartir múltiples productos</string>
+    <string name="share_option_individual">Individual (Con imagen, uno a uno)</string>
+    <string name="share_option_summary">Resumen (Texto único de todos)</string>
+    <string name="share_option_batch">Lote de imágenes (Todas las fotos)</string>
+    <string name="share_summary_header">📦 Catálogo de Productos 📦\n---------------------------</string>
+    <string name="share_summary_item">✅ %1$s\n💰 Precio: %2$s / %3$s\n</string>
 </resources>

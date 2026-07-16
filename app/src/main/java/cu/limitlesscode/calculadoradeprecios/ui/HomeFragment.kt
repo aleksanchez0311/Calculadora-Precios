@@ -18,8 +18,11 @@ import cu.limitlesscode.calculadoradeprecios.MainViewModel
 import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.SortField
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
+import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
+import cu.limitlesscode.calculadoradeprecios.launchBatchShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
+import cu.limitlesscode.calculadoradeprecios.launchSummaryShareIntent
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -96,13 +99,40 @@ class HomeFragment : Fragment() {
                 selectedProducts.forEach { viewModel.saveProduct(it.copy(isActive = false)) }
                 exitSelectionMode()
             } else if (selectionAction == "share") {
-                viewModel.startMultipleSharing(selectedProducts)
-                val first = viewModel.consumeNextProduct()
-                if (first != null) {
-                    launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format)
-                }
+                showShareOptionsDialog(selectedProducts)
             }
         }
+    }
+
+    private fun showShareOptionsDialog(products: List<Product>) {
+        val options = arrayOf(
+            getString(R.string.share_option_individual),
+            getString(R.string.share_option_summary),
+            getString(R.string.share_option_batch)
+        )
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.share_dialog_title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> { // Individual
+                        viewModel.startMultipleSharing(products)
+                        val first = viewModel.consumeNextProduct()
+                        if (first != null) {
+                            launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format)
+                        }
+                    }
+                    1 -> { // Summary
+                        launchSummaryShareIntent(requireContext(), products, viewModel.exchangeRate.value, format)
+                        exitSelectionMode()
+                    }
+                    2 -> { // Batch
+                        launchBatchShareIntent(requireContext(), products)
+                        exitSelectionMode()
+                    }
+                }
+            }
+            .show()
     }
 
     private fun observeViewModel() {
