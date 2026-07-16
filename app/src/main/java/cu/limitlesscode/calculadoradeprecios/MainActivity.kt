@@ -47,6 +47,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,7 +75,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
@@ -452,10 +453,10 @@ fun ManagementScreen(
                     if (!text.isNullOrBlank()) {
                         val json = JSONObject(text)
                         val items = json.optJSONArray("products") ?: JSONArray()
-                        val products = mutableListOf<Product>()
+                        val products1 = mutableListOf<Product>()
                         for (i in 0 until items.length()) {
                             val item = items.getJSONObject(i)
-                            products.add(
+                            products1.add(
                                 Product(
                                     id = item.optLong("id", 0L),
                                     equipo = item.optString("equipo", ""),
@@ -471,7 +472,7 @@ fun ManagementScreen(
                                 )
                             )
                         }
-                        products
+                        products1
                     } else null
                 }
 
@@ -799,7 +800,7 @@ fun ProductCard(
 
                 if (product.garantia.isNotBlank() || product.colores.isNotBlank() || product.infoAdicional.isNotBlank()) {
                     Spacer(modifier = Modifier.size(8.dp))
-                    Divider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = Color(0xFFEEEEEE))
                     Spacer(modifier = Modifier.size(8.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         if (product.garantia.isNotBlank()) {
@@ -896,7 +897,7 @@ fun ProductManagementForm(
             )
 
             Spacer(modifier = Modifier.size(4.dp))
-            Divider(color = Color(0xFFEEEEEE))
+            HorizontalDivider(color = Color(0xFFEEEEEE))
             Spacer(modifier = Modifier.size(12.dp))
             Text(
                 text = "Calculadora CUP → USD",
