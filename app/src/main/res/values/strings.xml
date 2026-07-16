@@ -33,6 +33,8 @@
     <string name="management_products_button">Productos</string>
     <string name="management_form_image_hint">Imágen del producto</string>
     <string name="default_exchange_rate_title">Tasa de cambio USD → CUP</string>
+    <string name="settings_backup_title">Respaldo y restauración</string>
+    <string name="settings_backup_button">Iniciar</string>
     <string name="home_product_list_title">Productos</string>
     <string name="select_all">Seleccionar todos</string>
     <string name="home_empty_card_list">No hay productos. Agrégalos en la pestaña Administración.</string>

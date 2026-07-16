@@ -1,9 +1,13 @@
 package cu.limitlesscode.calculadoradeprecios.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -11,8 +15,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
+import cu.limitlesscode.calculadoradeprecios.data.BackupManager
+import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 class SettingsFragment : Fragment() {
 
@@ -20,6 +28,55 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by activityViewModels()
+    private val backupManager by lazy { BackupManager(requireContext()) }
+
+    private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        uri?.let {
+            lifecycleScope.launch {
+                val success = backupManager.exportBackup(viewModel.products.value, it)
+                if (success) {
+                    Toast.makeText(requireContext(), "Respaldo guardado", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            lifecycleScope.launch {
+                val mimeType = requireContext().contentResolver.getType(it)
+                val restored = if (mimeType == "application/zip") {
+                    backupManager.importBackup(it)
+                } else {
+                    val text = requireContext().contentResolver.openInputStream(it)?.bufferedReader().use { r -> r?.readText() }
+                    if (!text.isNullOrBlank()) {
+                        val json = JSONObject(text)
+                        val items = json.optJSONArray("products") ?: JSONArray()
+                        val list = mutableListOf<Product>()
+                        for (i in 0 until items.length()) {
+                            val item = items.getJSONObject(i)
+                            list.add(Product(
+                                id = item.optLong("id", 0L),
+                                equipo = item.optString("equipo", ""),
+                                marca = item.optString("marca", ""),
+                                modelo = item.optString("modelo", ""),
+                                tipo = item.optString("tipo", ""),
+                                precioUsd = item.optDouble("precioUsd", 0.0),
+                                isActive = item.optBoolean("isActive", true),
+                                imageUrl = item.optString("imageUrl", ""),
+                                garantia = item.optString("garantia", ""),
+                                colores = item.optString("colores", ""),
+                                infoAdicional = item.optString("infoAdicional", "")
+                            ))
+                        }
+                        list
+                    } else null
+                }
+                restored?.forEach { p -> viewModel.saveProduct(p) }
+                if (restored != null) Toast.makeText(requireContext(), "Importación completada", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,6 +89,7 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupInputs()
+        setupBackup()
         observeViewModel()
     }
 
@@ -43,6 +101,26 @@ class SettingsFragment : Fragment() {
                 viewModel.updateExchangeRate(rate)
             }
         }
+    }
+
+    private fun setupBackup() {
+        binding.btnSetupBackup.setOnClickListener {
+            showBackupDialog()
+        }
+    }
+
+    private fun showBackupDialog() {
+        val options = arrayOf("Exportar productos", "Restaurar respaldo")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Respaldo y restauración")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> exportLauncher.launch("productos-backup.zip")
+                    1 -> importLauncher.launch(arrayOf("application/zip", "application/json"))
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun observeViewModel() {
