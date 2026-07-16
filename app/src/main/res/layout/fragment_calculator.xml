@@ -17,7 +17,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Tasa de cambio USD → CUP"
+                android:text="@string/default_exchange_rate_title"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:paddingBottom="8dp"/>
@@ -27,7 +27,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Tasa de cambio">
+                android:hint="@string/default_exchange_rate_form_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_exchange_rate"
@@ -45,7 +45,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Buscar productos"
+                android:hint="@string/search_products_hint"
                 app:startIconDrawable="@android:drawable/ic_menu_search">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -67,26 +67,19 @@
                     android:id="@+id/tv_list_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Productos activos"
+                    android:text="@string/home_product_list_title"
                     android:textStyle="bold"
                     android:layout_centerVertical="true"/>
-
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_hide_mode"
+                    android:id="@+id/btn_select_all"
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:text="Ocultar" />
+                    android:text="@string/select_all"
+                    android:visibility="gone" />
             </RelativeLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_select_all"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Seleccionar todos"
-                android:visibility="gone" />
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_products"
@@ -99,7 +92,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="No hay productos. Agrégalos en la pestaña Administración."
+                android:text="@string/home_empty_card_list"
                 android:visibility="gone"
                 android:paddingTop="32dp"/>
 

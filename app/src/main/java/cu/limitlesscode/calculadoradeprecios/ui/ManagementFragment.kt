@@ -144,8 +144,7 @@ class ManagementFragment : Fragment() {
     private fun setupNavButtons() {
         binding.btnViewProducts.setOnClickListener { switchView("products") }
         binding.btnViewBackup.setOnClickListener { switchView("backup") }
-        binding.btnViewDisabled.setOnClickListener { switchView("disabled") }
-        
+
         binding.btnExport.setOnClickListener { exportLauncher.launch("productos-backup.zip") }
         binding.btnImport.setOnClickListener { importLauncher.launch(arrayOf("application/zip", "application/json")) }
     }

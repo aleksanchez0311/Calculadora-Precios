@@ -34,7 +34,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Productos" />
+                    android:text="@string/management_products_button" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view_backup"
@@ -42,15 +42,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Respaldo" />
+                    android:text="@string/management_backup_button" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_view_disabled"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Desactivados" />
             </LinearLayout>
 
             <View
@@ -75,7 +68,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Equipo *"
+                        android:hint="@string/management_form_hint_product"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_equipo"
@@ -87,7 +80,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Marca"
+                        android:hint="@string/management_form_hint_brand"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_marca"
@@ -99,7 +92,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Modelo"
+                        android:hint="@string/management_form_hint_model"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_modelo"
@@ -111,7 +104,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Tipo"
+                        android:hint="@string/management_form_hint_type"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_tipo"
@@ -123,7 +116,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Precio USD *"
+                        android:hint="@string/management_form_hint_usd_price"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_precio"
@@ -136,7 +129,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Información adicional"
+                        android:hint="@string/management_form_hint_adicional_info"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_info"
@@ -150,7 +143,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Garantía"
+                        android:hint="@string/management_form_hint_guaranty"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_garantia"
@@ -162,7 +155,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Colores disponibles"
+                        android:hint="@string/management_form_hint_available_colors"
                         android:layout_marginBottom="8dp">
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_colores"
@@ -171,49 +164,11 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- CUP to USD Converter inside form -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Calculadora CUP → USD"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"/>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Monto en CUP"
-                        android:layout_marginTop="8dp">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/et_cup_calc"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="numberDecimal" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <TextView
-                        android:id="@+id/tv_usd_calc_result"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="USD aprox: 0.00"
-                        android:layout_marginTop="4dp"/>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_use_usd"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Usar valor" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#EEEEEE"
-                        android:layout_marginVertical="12dp" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Imagen del producto" />
+                        android:text="@string/product_image" />
 
                     <FrameLayout
                         android:id="@+id/layout_image_picker"
@@ -226,6 +181,7 @@
                             android:id="@+id/iv_product_preview"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:contentDescription="@string/management_form_image_hint"
                             android:scaleType="centerCrop" />
 
                         <LinearLayout
@@ -234,14 +190,16 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="vertical">
+
                             <ImageView
                                 android:layout_width="36dp"
                                 android:layout_height="36dp"
                                 app:srcCompat="@android:drawable/ic_menu_add" />
+
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Toca para seleccionar una foto" />
+                                android:text="@string/browse_images" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -250,9 +208,49 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="top|end"
-                            android:text="Cambiar"
+                            android:text="@string/change_image"
                             android:visibility="gone" />
                     </FrameLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#EEEEEE"
+                        android:layout_marginVertical="12dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/calculator_header"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="@string/calculator_field_hint">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_cup_calc"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:id="@+id/tv_usd_calc_result"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/calculator_result" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_use_usd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/calculator_button_text" />
 
                     <TextView
                         android:id="@+id/tv_error"
@@ -272,7 +270,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Guardar"
+                            android:text="@string/save"
                             android:layout_marginEnd="8dp"/>
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_cancel"
@@ -280,7 +278,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Cancelar" />
+                            android:text="@string/cancel" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -301,12 +299,12 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Copia de seguridad"
+                        android:text="@string/backup_button"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Exporta tus productos a un archivo JSON para guardarlos o restaura un respaldo anterior desde aquí."
+                        android:text="@string/backup_description"
                         android:layout_marginTop="8dp"
                         android:textColor="#808080" />
                     <LinearLayout
@@ -318,13 +316,12 @@
                             android:id="@+id/btn_export"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Exportar respaldo" />
+                            android:text="@string/backup_export_button" />
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_import"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Restaurar respaldo" />
+                            android:text="@string/backup_restore_button" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -337,7 +334,7 @@
                 android:id="@+id/tv_list_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Productos guardados"
+                android:text="@string/backup_success_response"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 

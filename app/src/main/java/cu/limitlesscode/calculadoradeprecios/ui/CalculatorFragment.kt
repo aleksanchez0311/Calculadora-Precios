@@ -86,14 +86,6 @@ class CalculatorFragment : Fragment() {
     }
 
     private fun setupButtons() {
-        binding.btnHideMode.setOnClickListener {
-            if (selectionMode) {
-                exitSelectionMode()
-            } else {
-                selectionAction = "hide"
-                enterSelectionMode()
-            }
-        }
 
         binding.btnSelectAll.setOnClickListener {
             val currentList = adapter.currentList
@@ -144,7 +136,6 @@ class CalculatorFragment : Fragment() {
     private fun enterSelectionMode(firstId: Long? = null) {
         selectionMode = true
         adapter.selectionMode = true
-        binding.btnHideMode.text = "Cancelar"
         binding.btnSelectAll.visibility = View.VISIBLE
         binding.tvListTitle.text = if (selectionAction == "hide") "Selecciona para ocultar" else "Selecciona para compartir"
         
@@ -160,7 +151,6 @@ class CalculatorFragment : Fragment() {
         adapter.selectionMode = false
         selectedIds.clear()
         adapter.updateSelection(selectedIds)
-        binding.btnHideMode.text = "Ocultar"
         binding.btnSelectAll.visibility = View.GONE
         binding.tvListTitle.text = "Productos activos"
         binding.fabAction.visibility = View.GONE
