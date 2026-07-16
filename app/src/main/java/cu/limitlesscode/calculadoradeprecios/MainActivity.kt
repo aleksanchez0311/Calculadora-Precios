@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         
         // Sincronizar Toolbar con Navegación
         val appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.homeFragment, R.id.managementFragment)
+            setOf(R.id.homeFragment, R.id.managementFragment, R.id.settingsFragment)
         )
         binding.toolbar.setupWithNavController(navController, appBarConfiguration)
     }

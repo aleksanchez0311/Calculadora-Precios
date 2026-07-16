@@ -2,6 +2,7 @@
     <string name="app_name">Calculadora de Precios</string>
     <string name="calculator_screen">Inicio</string>
     <string name="management_screen">Administración</string>
+    <string name="settings_screen">Configuración</string>
     <string name="default_exchange_rate_form_hint">Tasa de cambio</string>
     <string name="search_products_hint">Buscar productos...</string>
     <string name="add_product">Agregar producto</string>

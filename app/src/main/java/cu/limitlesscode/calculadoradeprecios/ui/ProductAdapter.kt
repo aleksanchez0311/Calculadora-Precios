@@ -13,7 +13,7 @@ import cu.limitlesscode.calculadoradeprecios.databinding.ItemProductBinding
 import java.text.DecimalFormat
 
 class ProductAdapter(
-    private val exchangeRate: Double,
+    private var exchangeRate: Double,
     private val format: DecimalFormat,
     private val onShareClick: (Product, Double) -> Unit,
     private val onLongClick: (Product) -> Unit,
@@ -25,6 +25,11 @@ class ProductAdapter(
             field = value
             notifyDataSetChanged()
         }
+    
+    fun updateExchangeRate(newRate: Double) {
+        exchangeRate = newRate
+        notifyDataSetChanged()
+    }
     
     private val selectedIds = mutableSetOf<Long>()
 

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="cu.limitlesscode.calculadoradeprecios.ui.CalculatorFragment"
+        android:name="cu.limitlesscode.calculadoradeprecios.ui.HomeFragment"
         android:label="Calculadora"
         tools:layout="@layout/fragment_home" />
 
@@ -16,4 +16,10 @@
         android:name="cu.limitlesscode.calculadoradeprecios.ui.ManagementFragment"
         android:label="Administración"
         tools:layout="@layout/fragment_management" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="cu.limitlesscode.calculadoradeprecios.ui.SettingsFragment"
+        android:label="Configuración"
+        tools:layout="@layout/fragment_settings" />
 </navigation>

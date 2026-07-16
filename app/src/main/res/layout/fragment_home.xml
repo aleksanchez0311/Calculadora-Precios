@@ -14,32 +14,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/default_exchange_rate_title"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:paddingBottom="8dp"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/til_exchange_rate"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/default_exchange_rate_form_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_exchange_rate"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="12dp" />
-
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_search"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

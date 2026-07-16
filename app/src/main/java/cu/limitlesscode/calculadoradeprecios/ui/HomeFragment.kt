@@ -1,7 +1,5 @@
 package cu.limitlesscode.calculadoradeprecios.ui
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,15 +12,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
-import cu.limitlesscode.calculadoradeprecios.buildShareMessage
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
-import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
-class CalculatorFragment : Fragment() {
+class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -71,14 +67,6 @@ class CalculatorFragment : Fragment() {
     }
 
     private fun setupInputs() {
-        binding.etExchangeRate.setText(viewModel.exchangeRate.value.toString().replace('.', ','))
-        binding.etExchangeRate.addTextChangedListener { text ->
-            val rate = text.toString().replace(',', '.').toDoubleOrNull()
-            if (rate != null) {
-                viewModel.updateExchangeRate(rate)
-            }
-        }
-
         binding.etSearch.setText(viewModel.searchQuery.value)
         binding.etSearch.addTextChangedListener { text ->
             viewModel.setSearchQuery(text.toString())
@@ -122,11 +110,7 @@ class CalculatorFragment : Fragment() {
                 }
                 launch {
                     viewModel.exchangeRate.collect { rate ->
-                        // Evitar bucle de actualización si ya es el mismo
-                        val currentText = binding.etExchangeRate.text.toString().replace(',', '.')
-                        if (currentText.toDoubleOrNull() != rate) {
-                            binding.etExchangeRate.setText(rate.toString().replace('.', ','))
-                        }
+                        adapter.updateExchangeRate(rate)
                     }
                 }
             }
