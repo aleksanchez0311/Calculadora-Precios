@@ -53,6 +53,7 @@ android {
 
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 
     composeOptions {
@@ -95,8 +96,13 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("androidx.navigation:navigation-compose:2.7.3")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.3")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.3")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+    implementation("io.coil-kt:coil:2.6.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.datastore:datastore-preferences:1.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

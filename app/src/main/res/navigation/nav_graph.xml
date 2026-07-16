@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/calculatorFragment">
+
+    <fragment
+        android:id="@+id/calculatorFragment"
+        android:name="cu.limitlesscode.calculadoradeprecios.ui.CalculatorFragment"
+        android:label="Calculadora"
+        tools:layout="@layout/fragment_calculator" />
+
+    <fragment
+        android:id="@+id/managementFragment"
+        android:name="cu.limitlesscode.calculadoradeprecios.ui.ManagementFragment"
+        android:label="Administración"
+        tools:layout="@layout/fragment_management" />
+</navigation>

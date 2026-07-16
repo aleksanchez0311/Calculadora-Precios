@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/calculatorFragment"
+        android:icon="@drawable/ic_home"
+        android:title="Calculadora" />
+    <item
+        android:id="@+id/managementFragment"
+        android:icon="@drawable/ic_inventory"
+        android:title="Administración" />
+</menu>

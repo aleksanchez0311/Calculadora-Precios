@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Calculadora de Precios</string>
-    <string name="calculator_screen">Calculadora</string>
+    <string name="calculator_screen">Inicio</string>
     <string name="management_screen">Administración</string>
     <string name="exchange_rate">Tasa de cambio</string>
     <string name="search_products">Buscar productos...</string>
