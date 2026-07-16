@@ -25,6 +25,8 @@ fun buildShareMessage(product: Product, format: DecimalFormat, precioCup: Double
         appendLine("💰 Precio CUP: ${format.format(precioCup)}")
         if (product.garantia.isNotBlank()) {
             appendLine("📝 Garantia: ${product.garantia}")
+        }else{
+            appendLine("📝 Garantia: No")
         }
         if (coloresList != null) {
             append("🌈 Colores: $coloresList")
