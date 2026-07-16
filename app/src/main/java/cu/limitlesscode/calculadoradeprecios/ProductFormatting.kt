@@ -1,8 +1,11 @@
 package cu.limitlesscode.calculadoradeprecios
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
 import cu.limitlesscode.calculadoradeprecios.data.Product
+import java.io.File
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -61,25 +64,51 @@ fun launchShareIntent(
 
     val intent = Intent(Intent.ACTION_SEND).apply {
         if (product.imageUrl.isNotBlank()) {
+            val rawUri = Uri.parse(product.imageUrl)
+            val shareUri = if (rawUri.scheme == "file") {
+                val file = File(rawUri.path ?: "")
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+            } else {
+                rawUri
+            }
+
             type = "image/*"
             putExtra(Intent.EXTRA_TEXT, mensaje)
-            val imageUri = Uri.parse(product.imageUrl)
-            putExtra(Intent.EXTRA_STREAM, imageUri)
+            putExtra(Intent.EXTRA_STREAM, shareUri)
+            clipData = ClipData.newRawUri("Product Image", shareUri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } else {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, mensaje)
         }
-        setPackage("com.whatsapp")
     }
 
+    // Intentar WhatsApp regular
+    val whatsappIntent = Intent(intent).setPackage("com.whatsapp")
+    // Intentar WhatsApp Business
+    val businessIntent = Intent(intent).setPackage("com.whatsapp.w4b")
+    // Fallback genérico (Selector de Android)
+    val genericIntent = Intent.createChooser(intent, "Compartir producto")
+
     try {
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        // Fallback: si WhatsApp no está instalado, abre el enlace web
-        val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+        context.startActivity(whatsappIntent)
+    } catch (e1: Exception) {
+        try {
+            context.startActivity(businessIntent)
+        } catch (e2: Exception) {
+            try {
+                context.startActivity(genericIntent)
+            } catch (e3: Exception) {
+                // Último recurso: enlace web
+                val fallbackWeb = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("https://wa.me/?text=${Uri.encode(mensaje)}")
+                }
+                context.startActivity(fallbackWeb)
+            }
         }
-        context.startActivity(fallbackIntent)
     }
 }
