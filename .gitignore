@@ -30,3 +30,4 @@ keystore.properties
 RESUMEN.md
 /.vscode/settings.json
 /.idea/
+/.artifacts/
