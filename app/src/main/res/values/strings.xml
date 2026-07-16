@@ -30,7 +30,6 @@
     <string name="management_form_hint_brand">Marca</string>
     <string name="management_form_hint_product">Equipo *</string>
     <string name="management_backup_button">Respaldo</string>
-    <string name="management_products_button">Productos</string>
     <string name="management_form_image_hint">Imágen del producto</string>
     <string name="default_exchange_rate_title">Tasa de cambio USD → CUP</string>
     <string name="settings_backup_title">Respaldo y restauración</string>

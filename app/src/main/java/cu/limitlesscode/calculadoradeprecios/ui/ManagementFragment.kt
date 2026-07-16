@@ -65,6 +65,9 @@ class ManagementFragment : Fragment() {
     }
 
     private fun setupForm() {
+        binding.fabAdd.setOnClickListener {
+            showForm(true)
+        }
         binding.layoutImagePicker.setOnClickListener {
             imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
@@ -111,7 +114,7 @@ class ManagementFragment : Fragment() {
         binding.etColores.setText(product.colores)
         imageUri = product.imageUrl
         updateImagePreview()
-        binding.scrollView.smoothScrollTo(0, 0)
+        showForm(true)
     }
 
     private fun saveProduct() {
@@ -153,6 +156,15 @@ class ManagementFragment : Fragment() {
         imageUri = ""
         updateImagePreview()
         binding.tvError.visibility = View.GONE
+        showForm(false)
+    }
+
+    private fun showForm(show: Boolean) {
+        binding.cardForm.visibility = if (show) View.VISIBLE else View.GONE
+        binding.fabAdd.visibility = if (show) View.GONE else View.VISIBLE
+        if (show) {
+            binding.scrollView.smoothScrollTo(0, 0)
+        }
     }
 
     private fun updateImagePreview() {
