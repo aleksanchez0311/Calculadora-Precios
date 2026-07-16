@@ -27,6 +27,7 @@ keystore.properties
 
 # Build files
 **/build/
+**/release/
 RESUMEN.md
 /.vscode/settings.json
 /.idea/
