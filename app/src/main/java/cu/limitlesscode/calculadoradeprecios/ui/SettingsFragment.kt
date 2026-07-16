@@ -15,6 +15,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
+import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.data.BackupManager
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentSettingsBinding
@@ -39,7 +40,7 @@ class SettingsFragment : Fragment() {
                     it
                 )
                 if (success) {
-                    Toast.makeText(requireContext(), "Respaldo guardado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.settings_backup_saved), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -52,7 +53,7 @@ class SettingsFragment : Fragment() {
                 if (backupData != null) {
                     showRestoreConfirmationDialog(backupData)
                 } else {
-                    Toast.makeText(requireContext(), "Error al leer el respaldo", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.settings_backup_error), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -60,13 +61,13 @@ class SettingsFragment : Fragment() {
 
     private fun showRestoreConfirmationDialog(data: cu.limitlesscode.calculadoradeprecios.data.BackupData) {
         AlertDialog.Builder(requireContext())
-            .setTitle("Confirmar Restauración")
-            .setMessage("Esta acción eliminará TODOS los productos actuales y los reemplazará con los del respaldo. ¿Desea continuar?")
-            .setPositiveButton("Restaurar") { _, _ ->
+            .setTitle(getString(R.string.settings_restore_confirm_title))
+            .setMessage(getString(R.string.settings_restore_confirm_msg))
+            .setPositiveButton(getString(R.string.backup_action_restore)) { _, _ ->
                 viewModel.restoreBackup(data)
-                Toast.makeText(requireContext(), "Restauración completada", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.settings_restore_complete), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
     }
 
@@ -102,16 +103,19 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showBackupDialog() {
-        val options = arrayOf("Exportar productos", "Restaurar respaldo")
+        val options = arrayOf(
+            getString(R.string.settings_backup_option_export),
+            getString(R.string.settings_backup_option_restore)
+        )
         AlertDialog.Builder(requireContext())
-            .setTitle("Respaldo y restauración")
+            .setTitle(getString(R.string.settings_backup_title))
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> exportLauncher.launch("productos-backup.zip")
                     1 -> importLauncher.launch(arrayOf("application/zip", "application/json"))
                 }
             }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
     }
 

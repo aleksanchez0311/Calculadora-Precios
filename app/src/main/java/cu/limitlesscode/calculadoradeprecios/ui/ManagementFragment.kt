@@ -16,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
+import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentManagementBinding
 import kotlinx.coroutines.launch
@@ -99,7 +100,7 @@ class ManagementFragment : Fragment() {
     private fun updateList() {
         val products = viewModel.products.value
         adapter.submitList(products)
-        binding.tvListHeader.text = "Productos (${products.size})"
+        binding.tvListHeader.text = getString(R.string.mgmt_list_count, products.size)
     }
 
     private fun editProduct(product: Product) {
@@ -122,7 +123,7 @@ class ManagementFragment : Fragment() {
         val precio = binding.etPrecio.text.toString().replace(',', '.').toDoubleOrNull()
         
         if (equipo.isBlank() || precio == null || imageUri.isBlank()) {
-            binding.tvError.text = "Equipo, Precio e Imagen son obligatorios"
+            binding.tvError.text = getString(R.string.mgmt_error_required)
             binding.tvError.visibility = View.VISIBLE
             return
         }

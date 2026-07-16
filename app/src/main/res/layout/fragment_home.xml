@@ -19,7 +19,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/search_products_hint"
+                android:hint="@string/home_search_hint"
                 app:startIconDrawable="@android:drawable/ic_menu_search">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -37,19 +37,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/tv_list_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_product_list_title"
-                    android:textStyle="bold"
-                    android:layout_centerVertical="true"/>
+
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_select_all"
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/select_all"
+                    android:text="@string/action_select_all"
                     android:visibility="gone" />
             </RelativeLayout>
 
@@ -66,7 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="@string/home_empty_card_list"
+                android:text="@string/home_empty_list"
                 android:visibility="gone"
                 android:paddingTop="32dp"/>
 

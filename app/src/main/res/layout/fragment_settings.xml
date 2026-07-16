@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
-        android:text="@string/default_exchange_rate_title"
+        android:text="@string/settings_exchange_rate_title"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -18,7 +18,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/default_exchange_rate_form_hint">
+        android:hint="@string/settings_exchange_rate_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_exchange_rate"

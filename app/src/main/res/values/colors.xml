@@ -8,13 +8,13 @@
 
     <color name="secondary">#535F70</color>
     <color name="onSecondary">#FFFFFF</color>
-    <color name="secondaryContainer">#D7E3F7</color>
-    <color name="onSecondaryContainer">#101C2B</color>
+    <color name="secondaryContainer">#CCE5FF</color>
+    <color name="onSecondaryContainer">#001D31</color>
 
-    <color name="tertiary">#6B5778</color>
+    <color name="tertiary">#00668B</color>
     <color name="onTertiary">#FFFFFF</color>
-    <color name="tertiaryContainer">#F2DAFF</color>
-    <color name="onTertiaryContainer">#251431</color>
+    <color name="tertiaryContainer">#C2E8FF</color>
+    <color name="onTertiaryContainer">#001E2C</color>
 
     <color name="error">#BA1A1A</color>
     <color name="onError">#FFFFFF</color>
@@ -29,4 +29,5 @@
     <color name="onSurfaceVariant">#43474E</color>
     <color name="outline">#73777F</color>
     <color name="outlineVariant">#C3C7CF</color>
+    <color name="whatsapp_green">#25D366</color>
 </resources>

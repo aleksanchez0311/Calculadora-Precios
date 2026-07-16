@@ -32,9 +32,9 @@
         <item name="colorOutlineVariant">@color/outlineVariant</item>
 
         <!-- Status Bar and Navigation Bar -->
-        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
     </style>
 </resources>

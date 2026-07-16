@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import cu.limitlesscode.calculadoradeprecios.MainViewModel
+import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
@@ -121,7 +122,7 @@ class HomeFragment : Fragment() {
         selectionMode = true
         adapter.selectionMode = true
         binding.btnSelectAll.visibility = View.VISIBLE
-        binding.tvListTitle.text = if (selectionAction == "hide") "Selecciona para ocultar" else "Selecciona para compartir"
+  //      binding.tvListTitle.text = if (selectionAction == "hide") getString(R.string.home_selection_hide) else getString(R.string.home_selection_share)
         
         if (firstId != null) {
             selectionAction = "share"
@@ -136,7 +137,7 @@ class HomeFragment : Fragment() {
         selectedIds.clear()
         adapter.updateSelection(selectedIds)
         binding.btnSelectAll.visibility = View.GONE
-        binding.tvListTitle.text = "Productos activos"
+       // binding.tvListTitle.text = getString(R.string.home_list_active)
         binding.fabAction.visibility = View.GONE
         selectionAction = null
         viewModel.cancelSharing()

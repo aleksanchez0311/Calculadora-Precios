@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.ItemProductManagementBinding
 
@@ -29,9 +30,12 @@ class ProductManagementAdapter(
     inner class ManagementViewHolder(private val binding: ItemProductManagementBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(product: Product) {
             binding.tvNameManage.text = buildDisplayName(product)
-            binding.tvPriceManage.text = "Precio: ${product.precioUsd} USD"
+            binding.tvPriceManage.text = binding.root.context.getString(R.string.mgmt_label_price, product.precioUsd.toString())
             
-            binding.tvStatus.text = if (product.isActive) "Estado: activo" else "Estado: desactivado"
+            binding.tvStatus.text = if (product.isActive) 
+                binding.root.context.getString(R.string.mgmt_label_status_active) 
+            else 
+                binding.root.context.getString(R.string.mgmt_label_status_inactive)
             binding.tvStatus.alpha = if (product.isActive) 1.0f else 0.5f
 
             if (product.imageUrl.isNotBlank()) {
@@ -43,7 +47,7 @@ class ProductManagementAdapter(
 
             if (product.garantia.isNotBlank()) {
                 binding.tvGarantiaManage.visibility = View.VISIBLE
-                binding.tvGarantiaManage.text = "Garantía: ${product.garantia}"
+                binding.tvGarantiaManage.text = binding.root.context.getString(R.string.mgmt_label_garanty, product.garantia)
             } else {
                 binding.tvGarantiaManage.visibility = View.GONE
             }

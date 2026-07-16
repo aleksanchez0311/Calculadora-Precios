@@ -35,7 +35,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_product">
+                        android:hint="@string/mgmt_form_hint_product">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_equipo"
@@ -48,7 +48,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_brand">
+                        android:hint="@string/mgmt_form_hint_brand">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_marca"
@@ -61,7 +61,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_model">
+                        android:hint="@string/mgmt_form_hint_model">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_modelo"
@@ -74,7 +74,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_type">
+                        android:hint="@string/mgmt_form_hint_type">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_tipo"
@@ -87,7 +87,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_usd_price">
+                        android:hint="@string/mgmt_form_hint_usd_price">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_precio"
@@ -101,7 +101,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_adicional_info">
+                        android:hint="@string/mgmt_form_hint_info">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_info"
@@ -116,7 +116,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_guaranty">
+                        android:hint="@string/mgmt_form_hint_guaranty">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_garantia"
@@ -129,7 +129,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:hint="@string/management_form_hint_available_colors">
+                        android:hint="@string/mgmt_form_hint_colors">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_colores"
@@ -142,7 +142,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/product_image" />
+                        android:text="@string/mgmt_form_header_image" />
 
                     <FrameLayout
                         android:id="@+id/layout_image_picker"
@@ -155,7 +155,7 @@
                             android:id="@+id/iv_product_preview"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:contentDescription="@string/management_form_image_hint"
+                            android:contentDescription="@string/mgmt_form_image_picker"
                             android:scaleType="centerCrop" />
 
                         <LinearLayout
@@ -173,7 +173,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/browse_images" />
+                                android:text="@string/action_browse_images" />
                         </LinearLayout>
 
                         <com.google.android.material.button.MaterialButton
@@ -182,7 +182,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="top|end"
-                            android:text="@string/change_image"
+                            android:text="@string/action_change_image"
                             android:visibility="gone" />
                     </FrameLayout>
 
@@ -203,7 +203,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="@string/calculator_header"
+                            android:text="@string/calc_header"
                             android:textStyle="bold" />
 
                         <com.google.android.material.textfield.TextInputLayout
@@ -211,7 +211,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:hint="@string/calculator_field_hint">
+                            android:hint="@string/calc_hint_cup">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/et_cup_calc"
@@ -233,7 +233,7 @@
                                 android:layout_height="match_parent"
                                 android:layout_marginTop="4dp"
                                 android:gravity="start"
-                                android:text="@string/calculator_result" />
+                                android:text="@string/calc_result_default" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/btn_use_usd"
@@ -243,7 +243,7 @@
 
                                 android:layout_marginTop="4dp"
                                 android:gravity="end"
-                                android:text="@string/calculator_button_text" />
+                                android:text="@string/action_use_value" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -267,14 +267,14 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
-                            android:text="@string/save" />
+                            android:text="@string/action_save" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_cancel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/cancel" />
+                            android:text="@string/action_cancel" />
                     </LinearLayout>
 
                 </LinearLayout>
@@ -288,7 +288,7 @@
                 android:id="@+id/tv_list_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/backup_success_response"
+                android:text="@string/mgmt_list_header"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 

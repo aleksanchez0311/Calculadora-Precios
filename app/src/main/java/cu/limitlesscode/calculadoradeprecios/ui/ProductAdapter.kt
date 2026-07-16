@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import cu.limitlesscode.calculadoradeprecios.R
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.ItemProductBinding
 import java.text.DecimalFormat
@@ -53,8 +54,8 @@ class ProductAdapter(
             val precioCup = product.precioUsd * exchangeRate
             
             binding.tvName.text = buildDisplayName(product)
-            binding.tvPriceUsd.text = "💵 USD: ${format.format(product.precioUsd)}"
-            binding.tvPriceCup.text = "💰 CUP: ${format.format(precioCup)}"
+            binding.tvPriceUsd.text = binding.root.context.getString(R.string.product_label_usd, format.format(product.precioUsd))
+            binding.tvPriceCup.text = binding.root.context.getString(R.string.product_label_cup, format.format(precioCup))
 
             if (product.imageUrl.isNotBlank()) {
                 binding.ivProduct.visibility = View.VISIBLE
@@ -67,13 +68,13 @@ class ProductAdapter(
             binding.layoutExtraInfo.visibility = if (hasExtra) View.VISIBLE else View.GONE
             
             binding.tvGarantia.visibility = if (product.garantia.isNotBlank()) View.VISIBLE else View.GONE
-            binding.tvGarantia.text = "📝 ${product.garantia}"
+            binding.tvGarantia.text = binding.root.context.getString(R.string.product_label_garanty, product.garantia)
             
             binding.tvColores.visibility = if (product.colores.isNotBlank()) View.VISIBLE else View.GONE
-            binding.tvColores.text = "🌈 ${product.colores}"
+            binding.tvColores.text = binding.root.context.getString(R.string.product_label_colors, product.colores)
             
             binding.tvInfoAdicional.visibility = if (product.infoAdicional.isNotBlank()) View.VISIBLE else View.GONE
-            binding.tvInfoAdicional.text = "ℹ️ ${product.infoAdicional}"
+            binding.tvInfoAdicional.text = binding.root.context.getString(R.string.product_label_info, product.infoAdicional)
 
             binding.btnShare.visibility = if (selectionMode) View.GONE else View.VISIBLE
             binding.cbSelection.visibility = if (selectionMode) View.VISIBLE else View.GONE

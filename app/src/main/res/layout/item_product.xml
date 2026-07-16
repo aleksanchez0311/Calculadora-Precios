@@ -68,7 +68,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     app:icon="@android:drawable/ic_menu_share"
-                    app:iconTint="#25D366" />
+                    app:iconTint="@color/whatsapp_green" />
 
                 <CheckBox
                     android:id="@+id/cb_selection"
