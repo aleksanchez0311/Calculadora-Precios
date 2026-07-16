@@ -2,7 +2,6 @@ package cu.limitlesscode.calculadoradeprecios
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
@@ -29,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         
         // Sincronizar Toolbar con Navegación
         val appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.calculatorFragment, R.id.managementFragment)
+            setOf(R.id.homeFragment, R.id.managementFragment)
         )
         binding.toolbar.setupWithNavController(navController, appBarConfiguration)
     }

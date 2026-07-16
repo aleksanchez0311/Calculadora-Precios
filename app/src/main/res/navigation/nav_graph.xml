@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/calculatorFragment">
+    app:startDestination="@id/homeFragment">
 
     <fragment
-        android:id="@+id/calculatorFragment"
+        android:id="@+id/homeFragment"
         android:name="cu.limitlesscode.calculadoradeprecios.ui.CalculatorFragment"
         android:label="Calculadora"
-        tools:layout="@layout/fragment_calculator" />
+        tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/managementFragment"

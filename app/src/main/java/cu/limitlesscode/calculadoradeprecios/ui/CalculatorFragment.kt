@@ -17,14 +17,14 @@ import cu.limitlesscode.calculadoradeprecios.MainViewModel
 import cu.limitlesscode.calculadoradeprecios.buildShareMessage
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
 import cu.limitlesscode.calculadoradeprecios.data.Product
-import cu.limitlesscode.calculadoradeprecios.databinding.FragmentCalculatorBinding
+import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 class CalculatorFragment : Fragment() {
 
-    private var _binding: FragmentCalculatorBinding? = null
+    private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by activityViewModels()
@@ -39,7 +39,7 @@ class CalculatorFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentCalculatorBinding.inflate(inflater, container, false)
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 

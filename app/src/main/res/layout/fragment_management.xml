@@ -18,10 +18,10 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingBottom="16dp"
                 android:text="Administrar productos"
                 android:textSize="20sp"
-                android:textStyle="bold"
-                android:paddingBottom="16dp"/>
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -68,8 +68,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_product"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_product">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_equipo"
                             android:layout_width="match_parent"
@@ -80,8 +81,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_brand"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_brand">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_marca"
                             android:layout_width="match_parent"
@@ -92,8 +94,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_model"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_model">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_modelo"
                             android:layout_width="match_parent"
@@ -104,8 +107,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_type"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_type">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_tipo"
                             android:layout_width="match_parent"
@@ -116,8 +120,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_usd_price"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_usd_price">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_precio"
                             android:layout_width="match_parent"
@@ -129,22 +134,24 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_adicional_info"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_adicional_info">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_info"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:minLines="3"
-                            android:gravity="top" />
+                            android:gravity="top"
+                            android:minLines="3" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_guaranty"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_guaranty">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_garantia"
                             android:layout_width="match_parent"
@@ -155,8 +162,9 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/management_form_hint_available_colors"
-                        android:layout_marginBottom="8dp">
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/management_form_hint_available_colors">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_colores"
                             android:layout_width="match_parent"
@@ -215,8 +223,8 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#EEEEEE"
-                        android:layout_marginVertical="12dp" />
+                        android:layout_marginVertical="12dp"
+                        android:background="#EEEEEE" />
 
                     <TextView
                         android:layout_width="match_parent"
@@ -239,42 +247,55 @@
                             android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        android:id="@+id/tv_usd_calc_result"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/calculator_result" />
+                        android:orientation="horizontal">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_use_usd"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/calculator_button_text" />
+                        <TextView
+                            android:id="@+id/tv_usd_calc_result"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:gravity="start"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/calculator_result" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_use_usd"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_marginTop="4dp"
+                            android:gravity="end"
+
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="@string/calculator_button_text" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_error"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/design_default_color_error"
                         android:layout_marginTop="8dp"
-                        android:visibility="gone"/>
+                        android:textColor="@color/design_default_color_error"
+                        android:visibility="gone" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="16dp">
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_save"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
                             android:layout_weight="1"
-                            android:text="@string/save"
-                            android:layout_marginEnd="8dp"/>
+                            android:text="@string/save" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_cancel"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -291,32 +312,38 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 app:cardCornerRadius="16dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/backup_button"
                         android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/backup_description"
                         android:layout_marginTop="8dp"
+                        android:text="@string/backup_description"
                         android:textColor="#808080" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="16dp">
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_export"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/backup_export_button" />
+
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btn_import"
                             android:layout_width="wrap_content"
@@ -342,8 +369,8 @@
                 android:id="@+id/rv_management"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
