@@ -107,8 +107,8 @@
     <!-- Sharing Options -->
     <string name="share_dialog_title">Seleccionar modo de envío</string>
     <string name="share_option_individual">Individual (Uno a uno, con imagen)</string>
-    <string name="share_option_overlay">Lote con Info (Un solo envío, con info en la foto)</string>
-    <string name="share_option_pdf_catalog">Catálogo PDF (Un solo archivo con fotos e info)</string>
+    <string name="share_option_visual_batch">Catálogo Visual (Fotos con precio integradas)</string>
+    <string name="share_option_pdf_catalog">Catálogo PDF (Documento profesional con fotos e info)</string>
     <string name="share_summary_header">📦 Catálogo de Productos 📦\n---------------------------</string>
     <string name="share_summary_item">✅ %1$s\n💰 Precio: %2$s / %3$s\n</string>
 </resources>

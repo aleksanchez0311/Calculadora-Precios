@@ -2,4 +2,6 @@
 <paths>
     <!-- Para imágenes guardadas en /data/user/0/cu.limitlesscode.calculadoradeprecios/files/product_images -->
     <files-path name="product_images" path="product_images/" />
+    <!-- Para archivos temporales en cache (PDF y compartición por lote) -->
+    <cache-path name="shared_cache" path="." />
 </paths>

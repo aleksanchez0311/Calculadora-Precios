@@ -113,7 +113,7 @@ class HomeFragment : Fragment() {
     private fun showShareOptionsDialog(products: List<Product>) {
         val options = arrayOf(
             getString(R.string.share_option_individual),
-            getString(R.string.share_option_overlay),
+            getString(R.string.share_option_visual_batch),
             getString(R.string.share_option_pdf_catalog)
         )
 
@@ -130,7 +130,7 @@ class HomeFragment : Fragment() {
                             launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format, target)
                         }
                     }
-                    1 -> { // Overlay (Lote con Info)
+                    1 -> { // Visual Batch (Lote con Info)
                         viewLifecycleOwner.lifecycleScope.launch {
                             launchOverlayBatchShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
                             exitSelectionMode()

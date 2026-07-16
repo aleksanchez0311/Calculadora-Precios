@@ -52,6 +52,34 @@ fun buildShareMessage(product: Product, format: DecimalFormat, precioCup: Double
     }.trimEnd()
 }
 
+/**
+ * Carga un bitmap desde una URI, aplicando escalado para ahorrar memoria.
+ */
+private fun loadScaledBitmap(context: android.content.Context, uri: Uri, targetSize: Int): Bitmap? {
+    return try {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeStream(input, null, options)
+            
+            var scale = 1
+            while (options.outWidth / scale / 2 >= targetSize && options.outHeight / scale / 2 >= targetSize) {
+                scale *= 2
+            }
+            
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = scale
+            }
+            context.contentResolver.openInputStream(uri)?.use { input2 ->
+                BitmapFactory.decodeStream(input2, null, decodeOptions)
+            }
+        }
+    } catch (_: Exception) {
+        null
+    }
+}
+
 fun createDecimalFormat(): DecimalFormat {
     val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
         groupingSeparator = ','
@@ -182,30 +210,28 @@ suspend fun launchPdfCatalogShareIntent(
         }
         
         // Draw image if available
-        val bitmap = try {
-            val uri = Uri.parse(product.imageUrl)
-            context.contentResolver.openInputStream(uri)?.use { 
-                BitmapFactory.decodeStream(it)
-            }
-        } catch (_: Exception) { null }
+        val bitmap = loadScaledBitmap(context, Uri.parse(product.imageUrl), 300)
         
         if (bitmap != null) {
-            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 80, 80, true)
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
             canvas.drawBitmap(scaledBitmap, 40f, yPos, paint)
         }
         
         val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
-        canvas.drawText(nombre, 130f, yPos + 20, textPaint)
+        canvas.drawText(nombre, 150f, yPos + 20, titlePaint)
         
         val precioUsd = "${format.format(product.precioUsd)} USD"
         val precioCup = "${format.format(product.precioUsd * exchangeRate)} CUP"
-        canvas.drawText("Precio: $precioUsd / $precioCup", 130f, yPos + 40, textPaint)
+        canvas.drawText("Precio: $precioUsd / $precioCup", 150f, yPos + 45, textPaint)
         
-        if (product.garantia.isNotBlank()) {
-            canvas.drawText("Garantía: ${product.garantia}", 130f, yPos + 60, textPaint)
+        val garantia = if (product.garantia.isNotBlank()) product.garantia else "No"
+        canvas.drawText("Garantía: $garantia", 150f, yPos + 65, textPaint)
+        
+        if (product.colores.isNotBlank()) {
+            canvas.drawText("Colores: ${product.colores}", 150f, yPos + 85, textPaint)
         }
         
-        yPos += 100f
+        yPos += 130f
     }
     
     document.finishPage(page)
@@ -250,12 +276,7 @@ suspend fun launchOverlayBatchShareIntent(
     val uris = ArrayList<Uri>()
     
     products.forEach { product ->
-        val bitmap = try {
-            val uri = Uri.parse(product.imageUrl)
-            context.contentResolver.openInputStream(uri)?.use { 
-                BitmapFactory.decodeStream(it)
-            }
-        } catch (_: Exception) { null }
+        val bitmap = loadScaledBitmap(context, Uri.parse(product.imageUrl), 800)
 
         if (bitmap != null) {
             val precioCup = product.precioUsd * exchangeRate
