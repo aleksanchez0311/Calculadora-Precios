@@ -20,10 +20,9 @@ import cu.limitlesscode.calculadoradeprecios.SortField
 import cu.limitlesscode.calculadoradeprecios.createDecimalFormat
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
-import cu.limitlesscode.calculadoradeprecios.launchBatchShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchOverlayBatchShareIntent
+import cu.limitlesscode.calculadoradeprecios.launchPdfCatalogShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
-import cu.limitlesscode.calculadoradeprecios.launchSummaryShareIntent
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -114,9 +113,8 @@ class HomeFragment : Fragment() {
     private fun showShareOptionsDialog(products: List<Product>) {
         val options = arrayOf(
             getString(R.string.share_option_individual),
-            getString(R.string.share_option_summary),
-            getString(R.string.share_option_batch),
-            getString(R.string.share_option_overlay)
+            getString(R.string.share_option_overlay),
+            getString(R.string.share_option_pdf_catalog)
         )
 
         val target = viewModel.whatsappNumber.value
@@ -132,17 +130,15 @@ class HomeFragment : Fragment() {
                             launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format, target)
                         }
                     }
-                    1 -> { // Summary
-                        launchSummaryShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
-                        exitSelectionMode()
-                    }
-                    2 -> { // Batch
-                        launchBatchShareIntent(requireContext(), products, target)
-                        exitSelectionMode()
-                    }
-                    3 -> { // Overlay
+                    1 -> { // Overlay (Lote con Info)
                         viewLifecycleOwner.lifecycleScope.launch {
                             launchOverlayBatchShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
+                            exitSelectionMode()
+                        }
+                    }
+                    2 -> { // PDF Catalog
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            launchPdfCatalogShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
                             exitSelectionMode()
                         }
                     }

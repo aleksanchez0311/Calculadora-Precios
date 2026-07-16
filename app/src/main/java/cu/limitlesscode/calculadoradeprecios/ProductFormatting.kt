@@ -7,8 +7,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.text.TextPaint
 import androidx.core.content.FileProvider
 import cu.limitlesscode.calculadoradeprecios.data.Product
 import java.io.File
@@ -42,11 +43,11 @@ fun buildShareMessage(product: Product, format: DecimalFormat, precioCup: Double
         appendLine("💰 Precio CUP: ${format.format(precioCup)}")
         if (product.garantia.isNotBlank()) {
             appendLine("📝 Garantia: ${product.garantia}")
-        }else{
+        } else {
             appendLine("📝 Garantia: No")
         }
         if (coloresList != null) {
-            append("🌈 Colores: $coloresList")
+            appendLine("🌈 Colores: $coloresList")
         }
     }.trimEnd()
 }
@@ -67,11 +68,13 @@ private fun getShareableUri(context: android.content.Context, imageUrl: String):
     val rawUri = Uri.parse(imageUrl)
     return if (rawUri.scheme == "file") {
         val file = File(rawUri.path ?: "")
-        FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        if (file.exists()) {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        } else null
     } else {
         rawUri
     }
@@ -119,15 +122,9 @@ fun launchSummaryShareIntent(
     targetNumber: String = ""
 ) {
     val header = context.getString(R.string.share_summary_header)
-    val body = products.joinToString("\n") { product ->
+    val body = products.joinToString("\n\n") { product ->
         val precioCup = product.precioUsd * exchangeRate
-        val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
-        context.getString(
-            R.string.share_summary_item,
-            nombre,
-            "${format.format(product.precioUsd)} USD",
-            "${format.format(precioCup)} CUP"
-        )
+        buildShareMessage(product, format, precioCup)
     }
     val mensaje = "$header\n\n$body".trim()
 
@@ -140,27 +137,99 @@ fun launchSummaryShareIntent(
 }
 
 /**
- * Comparte todas las imágenes de los productos seleccionados en un solo lote.
+ * Genera un catálogo en PDF y lo comparte.
  */
-fun launchBatchShareIntent(
+suspend fun launchPdfCatalogShareIntent(
     context: android.content.Context,
     products: List<Product>,
+    exchangeRate: Double,
+    format: DecimalFormat,
     targetNumber: String = ""
-) {
-    val uris = ArrayList<Uri>()
+) = withContext(Dispatchers.IO) {
+    val document = PdfDocument()
+    val pageWidth = 595 // A4 width in points
+    val pageHeight = 842 // A4 height in points
+    
+    var yPos = 40f
+    var pageNumber = 1
+    var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+    var page = document.startPage(pageInfo)
+    var canvas = page.canvas
+    
+    val paint = Paint()
+    val textPaint = TextPaint().apply {
+        color = Color.BLACK
+        textSize = 12f
+        isAntiAlias = true
+    }
+    val titlePaint = TextPaint(textPaint).apply {
+        textSize = 16f
+        isFakeBoldText = true
+    }
+    
+    // Header
+    canvas.drawText(context.getString(R.string.share_summary_header), 40f, yPos, titlePaint)
+    yPos += 40f
+    
     products.forEach { product ->
-        getShareableUri(context, product.imageUrl)?.let { uris.add(it) }
+        if (yPos + 120 > pageHeight) { // Simple check for new page
+            document.finishPage(page)
+            pageNumber++
+            pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+            page = document.startPage(pageInfo)
+            canvas = page.canvas
+            yPos = 40f
+        }
+        
+        // Draw image if available
+        val bitmap = try {
+            val uri = Uri.parse(product.imageUrl)
+            context.contentResolver.openInputStream(uri)?.use { 
+                BitmapFactory.decodeStream(it)
+            }
+        } catch (_: Exception) { null }
+        
+        if (bitmap != null) {
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 80, 80, true)
+            canvas.drawBitmap(scaledBitmap, 40f, yPos, paint)
+        }
+        
+        val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
+        canvas.drawText(nombre, 130f, yPos + 20, textPaint)
+        
+        val precioUsd = "${format.format(product.precioUsd)} USD"
+        val precioCup = "${format.format(product.precioUsd * exchangeRate)} CUP"
+        canvas.drawText("Precio: $precioUsd / $precioCup", 130f, yPos + 40, textPaint)
+        
+        if (product.garantia.isNotBlank()) {
+            canvas.drawText("Garantía: ${product.garantia}", 130f, yPos + 60, textPaint)
+        }
+        
+        yPos += 100f
     }
-
-    if (uris.isEmpty()) return
-
-    val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-        type = "image/*"
-        putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    
+    document.finishPage(page)
+    
+    val file = File(context.cacheDir, "catalogo_productos.pdf")
+    try {
+        FileOutputStream(file).use { out ->
+            document.writeTo(out)
+        }
+        document.close()
+        
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        
+        withContext(Dispatchers.Main) {
+            executeWhatsAppIntent(context, intent, "", targetNumber)
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
-
-    executeWhatsAppIntent(context, intent, "", targetNumber)
 }
 
 /**
@@ -174,7 +243,7 @@ suspend fun launchOverlayBatchShareIntent(
     targetNumber: String = ""
 ) = withContext(Dispatchers.IO) {
     val tempDir = File(context.cacheDir, "share_temp").apply { 
-        deleteRecursively()
+        deleteRecursively() 
         mkdirs() 
     }
     
@@ -189,12 +258,13 @@ suspend fun launchOverlayBatchShareIntent(
         } catch (_: Exception) { null }
 
         if (bitmap != null) {
+            val precioCup = product.precioUsd * exchangeRate
             val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
-            val precioUsd = "${format.format(product.precioUsd)} USD"
-            val precioCup = "${format.format(product.precioUsd * exchangeRate)} CUP"
+            val pUsd = "${format.format(product.precioUsd)} USD"
+            val pCup = "${format.format(precioCup)} CUP"
             
-            val overlayBitmap = addTextOverlay(bitmap, nombre, precioUsd, precioCup)
-            val file = File(tempDir, "share_${product.id}_${System.currentTimeMillis()}.jpg")
+            val overlayBitmap = addTextOverlay(bitmap, nombre, pUsd, pCup)
+            val file = File(tempDir, "card_${product.id}_${System.currentTimeMillis()}.jpg")
             
             try {
                 FileOutputStream(file).use { out ->
@@ -211,6 +281,13 @@ suspend fun launchOverlayBatchShareIntent(
             type = "image/*"
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            // CRÍTICO: Para ACTION_SEND_MULTIPLE, ClipData debe contener todos los URIs
+            val clipData = ClipData.newRawUri("Cards", uris[0])
+            for (i in 1 until uris.size) {
+                clipData.addItem(ClipData.Item(uris[i]))
+            }
+            this.clipData = clipData
         }
         withContext(Dispatchers.Main) {
             executeWhatsAppIntent(context, intent, "", targetNumber)
@@ -221,31 +298,41 @@ suspend fun launchOverlayBatchShareIntent(
 private fun addTextOverlay(original: Bitmap, name: String, usd: String, cup: String): Bitmap {
     val width = original.width
     val height = original.height
+    // Asegurar que el bitmap sea mutable
     val result = original.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(result)
 
-    val bannerHeight = (height * 0.15).toInt().coerceAtLeast(100)
+    // Banner alto (20% de la imagen) para que quepa bien el texto
+    val bannerHeight = (height * 0.20).toInt().coerceAtLeast(140)
     val paint = Paint().apply {
-        color = Color.argb(204, 0, 0, 0) // Negro semi-transparente
+        color = Color.argb(220, 0, 0, 0) // Negro más sólido (220/255)
         style = Paint.Style.FILL
     }
     canvas.drawRect(0f, (height - bannerHeight).toFloat(), width.toFloat(), height.toFloat(), paint)
 
-    val textPaint = Paint().apply {
+    val margin = width * 0.05f
+    
+    // Configurar pintura para el nombre
+    val namePaint = Paint().apply {
         color = Color.WHITE
-        textSize = (bannerHeight * 0.35).toFloat()
+        textSize = (bannerHeight * 0.30).toFloat()
         isAntiAlias = true
         isFakeBoldText = true
     }
-
-    val margin = 20f
-    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.4).toFloat(), textPaint)
     
-    val pricePaint = Paint(textPaint).apply {
-        textSize = (bannerHeight * 0.3).toFloat()
-        isFakeBoldText = false
+    // Dibujar nombre
+    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.35f), namePaint)
+    
+    // Configurar pintura para el precio
+    val pricePaint = Paint().apply {
+        color = Color.YELLOW // Amarillo para que resalte el precio
+        textSize = (bannerHeight * 0.25).toFloat()
+        isAntiAlias = true
+        isFakeBoldText = true
     }
-    canvas.drawText("$usd / $cup", margin, (height - bannerHeight * 0.2).toFloat(), pricePaint)
+    
+    // Dibujar precios
+    canvas.drawText("$usd / $cup", margin, (height - bannerHeight * 0.25f), pricePaint)
 
     return result
 }
@@ -268,7 +355,7 @@ private fun executeWhatsAppIntent(
     }
 
     // Fallback genérico (Selector de Android)
-    val genericIntent = Intent.createChooser(intent, "Compartir productos")
+    val genericIntent = Intent.createChooser(intent, context.getString(R.string.dialog_title_share))
 
     try {
         context.startActivity(whatsappIntent)

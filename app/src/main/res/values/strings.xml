@@ -74,8 +74,10 @@
     <!-- Filter & Sort -->
     <string name="action_filter">Filtrar</string>
     <string name="action_sort">Ordenar</string>
+    <string name="action_share">Compartir</string>
     <string name="dialog_title_filter">Filtrar por campo</string>
     <string name="dialog_title_sort">Ordenar lista</string>
+    <string name="dialog_title_share">Compartir catálogo</string>
     <string name="filter_all">Todos los campos</string>
     <string name="filter_equipo">Equipo</string>
     <string name="filter_brand">Marca</string>
@@ -103,11 +105,10 @@
     <string name="mgmt_label_garanty">Garantía: %1$s</string>
 
     <!-- Sharing Options -->
-    <string name="share_dialog_title">Compartir múltiples productos</string>
-    <string name="share_option_individual">Individual (Con imagen, uno a uno)</string>
-    <string name="share_option_summary">Resumen (Texto único de todos)</string>
-    <string name="share_option_batch">Lote de imágenes (Solo fotos)</string>
-    <string name="share_option_overlay">Lote con Info (Un solo envío)</string>
+    <string name="share_dialog_title">Seleccionar modo de envío</string>
+    <string name="share_option_individual">Individual (Uno a uno, con imagen)</string>
+    <string name="share_option_overlay">Lote con Info (Un solo envío, con info en la foto)</string>
+    <string name="share_option_pdf_catalog">Catálogo PDF (Un solo archivo con fotos e info)</string>
     <string name="share_summary_header">📦 Catálogo de Productos 📦\n---------------------------</string>
     <string name="share_summary_item">✅ %1$s\n💰 Precio: %2$s / %3$s\n</string>
 </resources>
