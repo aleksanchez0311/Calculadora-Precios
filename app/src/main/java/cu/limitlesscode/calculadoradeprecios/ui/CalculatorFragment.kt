@@ -66,27 +66,27 @@ class CalculatorFragment : Fragment() {
                 toggleSelection(product.id)
             }
         )
-        binding.rv_products.layoutManager = LinearLayoutManager(requireContext())
-        binding.rv_products.adapter = adapter
+        binding.rvProducts.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvProducts.adapter = adapter
     }
 
     private fun setupInputs() {
-        binding.et_exchange_rate.setText(viewModel.exchangeRate.value.toString().replace('.', ','))
-        binding.et_exchange_rate.addTextChangedListener { text ->
+        binding.etExchangeRate.setText(viewModel.exchangeRate.value.toString().replace('.', ','))
+        binding.etExchangeRate.addTextChangedListener { text ->
             val rate = text.toString().replace(',', '.').toDoubleOrNull()
             if (rate != null) {
                 viewModel.updateExchangeRate(rate)
             }
         }
 
-        binding.et_search.setText(viewModel.searchQuery.value)
-        binding.et_search.addTextChangedListener { text ->
+        binding.etSearch.setText(viewModel.searchQuery.value)
+        binding.etSearch.addTextChangedListener { text ->
             viewModel.setSearchQuery(text.toString())
         }
     }
 
     private fun setupButtons() {
-        binding.btn_hide_mode.setOnClickListener {
+        binding.btnHideMode.setOnClickListener {
             if (selectionMode) {
                 exitSelectionMode()
             } else {
@@ -95,7 +95,7 @@ class CalculatorFragment : Fragment() {
             }
         }
 
-        binding.btn_select_all.setOnClickListener {
+        binding.btnSelectAll.setOnClickListener {
             val currentList = adapter.currentList
             selectedIds.clear()
             selectedIds.addAll(currentList.map { it.id })
@@ -103,7 +103,7 @@ class CalculatorFragment : Fragment() {
             updateFab()
         }
 
-        binding.fab_action.setOnClickListener {
+        binding.fabAction.setOnClickListener {
             val selectedProducts = adapter.currentList.filter { selectedIds.contains(it.id) }
             if (selectionAction == "hide") {
                 selectedProducts.forEach { viewModel.saveProduct(it.copy(isActive = false)) }
@@ -125,15 +125,15 @@ class CalculatorFragment : Fragment() {
                     viewModel.products.collect { products ->
                         val visible = products.filter { it.isActive }
                         adapter.submitList(visible)
-                        binding.tv_empty.visibility = if (visible.isEmpty()) View.VISIBLE else View.GONE
+                        binding.tvEmpty.visibility = if (visible.isEmpty()) View.VISIBLE else View.GONE
                     }
                 }
                 launch {
                     viewModel.exchangeRate.collect { rate ->
                         // Evitar bucle de actualización si ya es el mismo
-                        val currentText = binding.et_exchange_rate.text.toString().replace(',', '.')
+                        val currentText = binding.etExchangeRate.text.toString().replace(',', '.')
                         if (currentText.toDoubleOrNull() != rate) {
-                            binding.et_exchange_rate.setText(rate.toString().replace('.', ','))
+                            binding.etExchangeRate.setText(rate.toString().replace('.', ','))
                         }
                     }
                 }
@@ -144,9 +144,9 @@ class CalculatorFragment : Fragment() {
     private fun enterSelectionMode(firstId: Long? = null) {
         selectionMode = true
         adapter.selectionMode = true
-        binding.btn_hide_mode.text = "Cancelar"
-        binding.btn_select_all.visibility = View.VISIBLE
-        binding.tv_list_title.text = if (selectionAction == "hide") "Selecciona para ocultar" else "Selecciona para compartir"
+        binding.btnHideMode.text = "Cancelar"
+        binding.btnSelectAll.visibility = View.VISIBLE
+        binding.tvListTitle.text = if (selectionAction == "hide") "Selecciona para ocultar" else "Selecciona para compartir"
         
         if (firstId != null) {
             selectionAction = "share"
@@ -160,10 +160,10 @@ class CalculatorFragment : Fragment() {
         adapter.selectionMode = false
         selectedIds.clear()
         adapter.updateSelection(selectedIds)
-        binding.btn_hide_mode.text = "Ocultar"
-        binding.btn_select_all.visibility = View.GONE
-        binding.tv_list_title.text = "Productos activos"
-        binding.fab_action.visibility = View.GONE
+        binding.btnHideMode.text = "Ocultar"
+        binding.btnSelectAll.visibility = View.GONE
+        binding.tvListTitle.text = "Productos activos"
+        binding.fabAction.visibility = View.GONE
         selectionAction = null
         viewModel.cancelSharing()
     }
@@ -180,11 +180,11 @@ class CalculatorFragment : Fragment() {
 
     private fun updateFab() {
         if (selectedIds.isNotEmpty()) {
-            binding.fab_action.visibility = View.VISIBLE
+            binding.fabAction.visibility = View.VISIBLE
             val icon = if (selectionAction == "share") android.R.drawable.ic_menu_share else android.R.drawable.ic_menu_view
-            binding.fab_action.setImageResource(icon)
+            binding.fabAction.setImageResource(icon)
         } else {
-            binding.fab_action.visibility = View.GONE
+            binding.fabAction.visibility = View.GONE
         }
     }
 

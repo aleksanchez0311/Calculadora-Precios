@@ -1,7 +1,15 @@
 <resources>
     <style name="Theme.CalculadoraPrecios" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:statusBarColor">?attr/colorPrimary</item>
-        <item name="android:navigationBarColor">?attr/colorPrimary</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+        <item name="colorPrimaryContainer">@color/primaryContainer</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/onSurface</item>
+
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

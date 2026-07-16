@@ -116,46 +116,46 @@ class ManagementFragment : Fragment() {
             onDelete = { product -> viewModel.deleteProduct(product) },
             onToggleActive = { product -> viewModel.saveProduct(product.copy(isActive = !product.isActive)) }
         )
-        binding.rv_management.layoutManager = LinearLayoutManager(requireContext())
-        binding.rv_management.adapter = adapter
+        binding.rvManagement.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvManagement.adapter = adapter
     }
 
     private fun setupForm() {
-        binding.layout_image_picker.setOnClickListener {
+        binding.layoutImagePicker.setOnClickListener {
             imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
-        binding.btn_change_image.setOnClickListener {
+        binding.btnChangeImage.setOnClickListener {
             imageUri = ""
             updateImagePreview()
         }
-        binding.btn_save.setOnClickListener { saveProduct() }
-        binding.btn_cancel.setOnClickListener { resetForm() }
+        binding.btnSave.setOnClickListener { saveProduct() }
+        binding.btnCancel.setOnClickListener { resetForm() }
         
-        binding.btn_use_usd.setOnClickListener {
-            val cup = binding.et_cup_calc.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0
+        binding.btnUseUsd.setOnClickListener {
+            val cup = binding.etCupCalc.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0
             val rate = viewModel.exchangeRate.value
             if (rate > 0) {
                 val usd = cup / rate
-                binding.et_precio.setText(String.format("%.2f", usd).replace('.', ','))
+                binding.etPrecio.setText(String.format("%.2f", usd).replace('.', ','))
             }
         }
     }
 
     private fun setupNavButtons() {
-        binding.btn_view_products.setOnClickListener { switchView("products") }
-        binding.btn_view_backup.setOnClickListener { switchView("backup") }
-        binding.btn_view_disabled.setOnClickListener { switchView("disabled") }
+        binding.btnViewProducts.setOnClickListener { switchView("products") }
+        binding.btnViewBackup.setOnClickListener { switchView("backup") }
+        binding.btnViewDisabled.setOnClickListener { switchView("disabled") }
         
-        binding.btn_export.setOnClickListener { exportLauncher.launch("productos-backup.zip") }
-        binding.btn_import.setOnClickListener { importLauncher.launch(arrayOf("application/zip", "application/json")) }
+        binding.btnExport.setOnClickListener { exportLauncher.launch("productos-backup.zip") }
+        binding.btnImport.setOnClickListener { importLauncher.launch(arrayOf("application/zip", "application/json")) }
     }
 
     private fun switchView(view: String) {
         activeView = view
-        binding.card_form.visibility = if (view == "products") View.VISIBLE else View.GONE
-        binding.card_backup.visibility = if (view == "backup") View.VISIBLE else View.GONE
-        binding.tv_list_header.visibility = if (view == "backup") View.GONE else View.VISIBLE
-        binding.rv_management.visibility = if (view == "backup") View.GONE else View.VISIBLE
+        binding.cardForm.visibility = if (view == "products") View.VISIBLE else View.GONE
+        binding.cardBackup.visibility = if (view == "backup") View.VISIBLE else View.GONE
+        binding.tvListHeader.visibility = if (view == "backup") View.GONE else View.VISIBLE
+        binding.rvManagement.visibility = if (view == "backup") View.GONE else View.VISIBLE
         
         updateList()
     }
@@ -175,19 +175,19 @@ class ManagementFragment : Fragment() {
             else -> products
         }
         adapter.submitList(filtered)
-        binding.tv_list_header.text = "Productos (${filtered.size})"
+        binding.tvListHeader.text = "Productos (${filtered.size})"
     }
 
     private fun editProduct(product: Product) {
         currentProduct = product
-        binding.et_equipo.setText(product.equipo)
-        binding.et_marca.setText(product.marca)
-        binding.et_modelo.setText(product.modelo)
-        binding.et_tipo.setText(product.tipo)
-        binding.et_precio.setText(product.precioUsd.toString())
-        binding.et_info.setText(product.infoAdicional)
-        binding.et_garantia.setText(product.garantia)
-        binding.et_colores.setText(product.colores)
+        binding.etEquipo.setText(product.equipo)
+        binding.etMarca.setText(product.marca)
+        binding.etModelo.setText(product.modelo)
+        binding.etTipo.setText(product.tipo)
+        binding.etPrecio.setText(product.precioUsd.toString())
+        binding.etInfo.setText(product.infoAdicional)
+        binding.etGarantia.setText(product.garantia)
+        binding.etColores.setText(product.colores)
         imageUri = product.imageUrl
         updateImagePreview()
         switchView("products")
@@ -195,25 +195,25 @@ class ManagementFragment : Fragment() {
     }
 
     private fun saveProduct() {
-        val equipo = binding.et_equipo.text.toString()
-        val precio = binding.et_precio.text.toString().replace(',', '.').toDoubleOrNull()
+        val equipo = binding.etEquipo.text.toString()
+        val precio = binding.etPrecio.text.toString().replace(',', '.').toDoubleOrNull()
         
         if (equipo.isBlank() || precio == null || imageUri.isBlank()) {
-            binding.tv_error.text = "Equipo, Precio e Imagen son obligatorios"
-            binding.tv_error.visibility = View.VISIBLE
+            binding.tvError.text = "Equipo, Precio e Imagen son obligatorios"
+            binding.tvError.visibility = View.VISIBLE
             return
         }
 
         val product = currentProduct?.copy(
-            equipo = equipo, marca = binding.et_marca.text.toString(),
-            modelo = binding.et_modelo.text.toString(), tipo = binding.et_tipo.text.toString(),
-            precioUsd = precio, imageUrl = imageUri, garantia = binding.et_garantia.text.toString(),
-            colores = binding.et_colores.text.toString(), infoAdicional = binding.et_info.text.toString()
+            equipo = equipo, marca = binding.etMarca.text.toString(),
+            modelo = binding.etModelo.text.toString(), tipo = binding.etTipo.text.toString(),
+            precioUsd = precio, imageUrl = imageUri, garantia = binding.etGarantia.text.toString(),
+            colores = binding.etColores.text.toString(), infoAdicional = binding.etInfo.text.toString()
         ) ?: Product(
-            equipo = equipo, marca = binding.et_marca.text.toString(),
-            modelo = binding.et_modelo.text.toString(), tipo = binding.et_tipo.text.toString(),
-            precioUsd = precio, imageUrl = imageUri, garantia = binding.et_garantia.text.toString(),
-            colores = binding.et_colores.text.toString(), infoAdicional = binding.et_info.text.toString()
+            equipo = equipo, marca = binding.etMarca.text.toString(),
+            modelo = binding.etModelo.text.toString(), tipo = binding.etTipo.text.toString(),
+            precioUsd = precio, imageUrl = imageUri, garantia = binding.etGarantia.text.toString(),
+            colores = binding.etColores.text.toString(), infoAdicional = binding.etInfo.text.toString()
         )
         
         viewModel.saveProduct(product)
@@ -222,28 +222,28 @@ class ManagementFragment : Fragment() {
 
     private fun resetForm() {
         currentProduct = null
-        binding.et_equipo.text?.clear()
-        binding.et_marca.text?.clear()
-        binding.et_modelo.text?.clear()
-        binding.et_tipo.text?.clear()
-        binding.et_precio.text?.clear()
-        binding.et_info.text?.clear()
-        binding.et_garantia.text?.clear()
-        binding.et_colores.text?.clear()
+        binding.etEquipo.text?.clear()
+        binding.etMarca.text?.clear()
+        binding.etModelo.text?.clear()
+        binding.etTipo.text?.clear()
+        binding.etPrecio.text?.clear()
+        binding.etInfo.text?.clear()
+        binding.etGarantia.text?.clear()
+        binding.etColores.text?.clear()
         imageUri = ""
         updateImagePreview()
-        binding.tv_error.visibility = View.GONE
+        binding.tvError.visibility = View.GONE
     }
 
     private fun updateImagePreview() {
         if (imageUri.isNotBlank()) {
-            binding.iv_product_preview.load(Uri.parse(imageUri))
-            binding.layout_pick_prompt.visibility = View.GONE
-            binding.btn_change_image.visibility = View.VISIBLE
+            binding.ivProductPreview.load(Uri.parse(imageUri))
+            binding.layoutPickPrompt.visibility = View.GONE
+            binding.btnChangeImage.visibility = View.VISIBLE
         } else {
-            binding.iv_product_preview.setImageDrawable(null)
-            binding.layout_pick_prompt.visibility = View.VISIBLE
-            binding.btn_change_image.visibility = View.GONE
+            binding.ivProductPreview.setImageDrawable(null)
+            binding.layoutPickPrompt.visibility = View.VISIBLE
+            binding.btnChangeImage.visibility = View.GONE
         }
     }
 
