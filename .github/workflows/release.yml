@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -64,17 +66,42 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download APK from build
         uses: actions/download-artifact@v4
         with:
           name: app-release
           path: apk-output
 
-      - name: Create Release
+      - name: Update Latest Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest
+          git push origin latest -f
+
+      - name: Create Version Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Versión ${{ github.ref_name }}
+          generate_release_notes: true
+          files: apk-output/**/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Latest Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
           name: Última versión (Automática)
+          body: |
+            Esta es la versión más reciente de la aplicación.
+            Corresponde al tag: ${{ github.ref_name }}
           files: apk-output/**/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
