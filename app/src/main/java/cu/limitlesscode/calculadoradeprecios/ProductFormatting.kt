@@ -388,19 +388,17 @@ private fun executeWhatsAppIntent(
     mensajeFallback: String,
     targetNumber: String = ""
 ) {
+    val cleanNumber = targetNumber.filter { it.isDigit() }
+    
     // Intentar WhatsApp regular
     val whatsappIntent = Intent(intent).setPackage("com.whatsapp")
     // Intentar WhatsApp Business
     val businessIntent = Intent(intent).setPackage("com.whatsapp.w4b")
 
-    if (targetNumber.isNotBlank()) {
-        val jid = if (targetNumber.startsWith("+")) targetNumber.substring(1) else targetNumber
-        whatsappIntent.putExtra("jid", "$jid@s.whatsapp.net")
-        businessIntent.putExtra("jid", "$jid@s.whatsapp.net")
+    if (cleanNumber.isNotBlank()) {
+        whatsappIntent.putExtra("jid", "$cleanNumber@s.whatsapp.net")
+        businessIntent.putExtra("jid", "$cleanNumber@s.whatsapp.net")
     }
-
-    // Fallback genérico (Selector de Android)
-    val genericIntent = Intent.createChooser(intent, context.getString(R.string.dialog_title_share))
 
     try {
         context.startActivity(whatsappIntent)
@@ -408,6 +406,10 @@ private fun executeWhatsAppIntent(
         try {
             context.startActivity(businessIntent)
         } catch (e2: Exception) {
+            // Si el número estaba configurado pero falló el envío directo, intentamos con Chooser
+            val chooserTitle = context.getString(R.string.dialog_title_share)
+            val genericIntent = Intent.createChooser(intent, chooserTitle)
+            
             try {
                 context.startActivity(genericIntent)
             } catch (e3: Exception) {
