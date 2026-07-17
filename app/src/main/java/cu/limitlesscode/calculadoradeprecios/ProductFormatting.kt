@@ -331,30 +331,52 @@ private fun addTextOverlay(original: Bitmap, name: String, usd: String, cup: Str
     canvas.drawRect(0f, (height - bannerHeight).toFloat(), width.toFloat(), height.toFloat(), paint)
 
     val margin = width * 0.05f
-    val textPaint = Paint().apply {
+    val availableWidth = width - (margin * 2)
+
+    val namePaint = Paint().apply {
         color = Color.WHITE
         textSize = (bannerHeight * 0.25).toFloat()
         isAntiAlias = true
         isFakeBoldText = true
     }
     
+    // Ajustar tamaño del nombre si es muy largo
+    var currentNameSize = namePaint.textSize
+    while (namePaint.measureText(name) > availableWidth && currentNameSize > 20f) {
+        currentNameSize -= 2f
+        namePaint.textSize = currentNameSize
+    }
+    
     // Fila 1: Nombre
-    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.3f), textPaint)
+    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.3f), namePaint)
     
     // Fila 2: Precios
-    val pricePaint = Paint(textPaint).apply {
+    val priceText = "$usd / $cup"
+    val pricePaint = Paint(namePaint).apply {
         color = Color.YELLOW
         textSize = (bannerHeight * 0.22).toFloat()
     }
-    canvas.drawText("$usd / $cup", margin, (height - bannerHeight + bannerHeight * 0.6f), pricePaint)
+
+    var currentPriceSize = pricePaint.textSize
+    while (pricePaint.measureText(priceText) > availableWidth && currentPriceSize > 18f) {
+        currentPriceSize -= 2f
+        pricePaint.textSize = currentPriceSize
+    }
+    canvas.drawText(priceText, margin, (height - bannerHeight + bannerHeight * 0.6f), pricePaint)
     
     // Fila 3: Garantía
-    val detailPaint = Paint(textPaint).apply {
+    val detailPaint = Paint(namePaint).apply {
         color = Color.LTGRAY
         textSize = (bannerHeight * 0.18).toFloat()
         isFakeBoldText = false
     }
     val gText = "Garantía: ${if (garantia.isNotBlank()) garantia else "No"}"
+
+    var currentDetailSize = detailPaint.textSize
+    while (detailPaint.measureText(gText) > availableWidth && currentDetailSize > 16f) {
+        currentDetailSize -= 2f
+        detailPaint.textSize = currentDetailSize
+    }
     canvas.drawText(gText, margin, (height - bannerHeight + bannerHeight * 0.85f), detailPaint)
 
     return result
