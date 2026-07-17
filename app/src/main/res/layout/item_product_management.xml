@@ -64,21 +64,21 @@
 
             <ImageButton
                 android:id="@+id/btn_toggle_active"
-                android:layout_width="48dp"
+                android:layout_width="30dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@android:drawable/ic_menu_view" />
 
             <ImageButton
                 android:id="@+id/btn_edit"
-                android:layout_width="48dp"
+                android:layout_width="30dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@android:drawable/ic_menu_edit" />
 
             <ImageButton
                 android:id="@+id/btn_delete"
-                android:layout_width="48dp"
+                android:layout_width="30dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@android:drawable/ic_menu_delete" />
