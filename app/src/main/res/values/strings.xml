@@ -106,9 +106,11 @@
 
     <!-- Sharing Options -->
     <string name="share_dialog_title">Seleccionar modo de envío</string>
-    <string name="share_option_individual">Individual (Uno a uno, con imagen)</string>
-    <string name="share_option_visual_batch">Catálogo Visual (Fotos con precio integradas)</string>
-    <string name="share_option_pdf_catalog">Catálogo PDF (Documento profesional con fotos e info)</string>
+    <string name="share_option_individual">1. Individual (Imagen + Texto por tarjeta)</string>
+    <string name="share_option_text_catalog">2. Catálogo de Texto (Un solo mensaje con todo)</string>
+    <string name="share_option_visual_batch">3. Catálogo Visual (Fotos con toda la info integrada)</string>
+    <string name="share_option_pdf_catalog">4. Catálogo PDF (Documento profesional completo)</string>
     <string name="share_summary_header">📦 Catálogo de Productos 📦\n---------------------------</string>
+    <string name="share_summary_divider">\n---------------------------\n</string>
     <string name="share_summary_item">✅ %1$s\n💰 Precio: %2$s / %3$s\n</string>
 </resources>

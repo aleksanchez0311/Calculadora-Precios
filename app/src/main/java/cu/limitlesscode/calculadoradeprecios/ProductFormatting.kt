@@ -140,7 +140,8 @@ fun launchShareIntent(
 }
 
 /**
- * Comparte un resumen de texto de múltiples productos en un solo mensaje.
+ * 2. CATÁLOGO DE TEXTO: Comparte un resumen de texto único de todos los productos.
+ * Incluye TODA la información de cada tarjeta.
  */
 fun launchSummaryShareIntent(
     context: android.content.Context,
@@ -150,7 +151,9 @@ fun launchSummaryShareIntent(
     targetNumber: String = ""
 ) {
     val header = context.getString(R.string.share_summary_header)
-    val body = products.joinToString("\n\n") { product ->
+    val divider = context.getString(R.string.share_summary_divider)
+    
+    val body = products.joinToString(divider) { product ->
         val precioCup = product.precioUsd * exchangeRate
         buildShareMessage(product, format, precioCup)
     }
@@ -165,7 +168,7 @@ fun launchSummaryShareIntent(
 }
 
 /**
- * Genera un catálogo en PDF y lo comparte.
+ * 4. CATÁLOGO PDF: Genera un documento profesional con fotos e información completa.
  */
 suspend fun launchPdfCatalogShareIntent(
     context: android.content.Context,
@@ -175,8 +178,19 @@ suspend fun launchPdfCatalogShareIntent(
     targetNumber: String = ""
 ) = withContext(Dispatchers.IO) {
     val document = PdfDocument()
-    val pageWidth = 595 // A4 width in points
-    val pageHeight = 842 // A4 height in points
+    val pageWidth = 595 // A4
+    val pageHeight = 842
+    
+    val paint = Paint()
+    val textPaint = TextPaint().apply {
+        color = Color.BLACK
+        textSize = 11f
+        isAntiAlias = true
+    }
+    val titlePaint = TextPaint(textPaint).apply {
+        textSize = 14f
+        isFakeBoldText = true
+    }
     
     var yPos = 40f
     var pageNumber = 1
@@ -184,23 +198,11 @@ suspend fun launchPdfCatalogShareIntent(
     var page = document.startPage(pageInfo)
     var canvas = page.canvas
     
-    val paint = Paint()
-    val textPaint = TextPaint().apply {
-        color = Color.BLACK
-        textSize = 12f
-        isAntiAlias = true
-    }
-    val titlePaint = TextPaint(textPaint).apply {
-        textSize = 16f
-        isFakeBoldText = true
-    }
-    
-    // Header
     canvas.drawText(context.getString(R.string.share_summary_header), 40f, yPos, titlePaint)
-    yPos += 40f
+    yPos += 50f
     
     products.forEach { product ->
-        if (yPos + 120 > pageHeight) { // Simple check for new page
+        if (yPos + 150 > pageHeight) {
             document.finishPage(page)
             pageNumber++
             pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
@@ -209,38 +211,42 @@ suspend fun launchPdfCatalogShareIntent(
             yPos = 40f
         }
         
-        // Draw image if available
+        // Imagen escalada para el PDF
         val bitmap = loadScaledBitmap(context, Uri.parse(product.imageUrl), 300)
-        
         if (bitmap != null) {
-            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
-            canvas.drawBitmap(scaledBitmap, 40f, yPos, paint)
+            val scaled = Bitmap.createScaledBitmap(bitmap, 100, 100, true)
+            canvas.drawBitmap(scaled, 40f, yPos, paint)
         }
         
+        val leftMargin = 155f
         val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
-        canvas.drawText(nombre, 150f, yPos + 20, titlePaint)
+        canvas.drawText(nombre, leftMargin, yPos + 15, titlePaint)
         
         val precioUsd = "${format.format(product.precioUsd)} USD"
         val precioCup = "${format.format(product.precioUsd * exchangeRate)} CUP"
-        canvas.drawText("Precio: $precioUsd / $precioCup", 150f, yPos + 45, textPaint)
+        canvas.drawText("Precio: $precioUsd / $precioCup", leftMargin, yPos + 35, textPaint)
         
         val garantia = if (product.garantia.isNotBlank()) product.garantia else "No"
-        canvas.drawText("Garantía: $garantia", 150f, yPos + 65, textPaint)
+        canvas.drawText("Garantía: $garantia", leftMargin, yPos + 55, textPaint)
         
         if (product.colores.isNotBlank()) {
-            canvas.drawText("Colores: ${product.colores}", 150f, yPos + 85, textPaint)
+            canvas.drawText("Colores: ${product.colores}", leftMargin, yPos + 75, textPaint)
         }
         
-        yPos += 130f
+        if (product.infoAdicional.isNotBlank()) {
+            val info = if (product.infoAdicional.length > 60) product.infoAdicional.take(57) + "..." else product.infoAdicional
+            canvas.drawText("Info: $info", leftMargin, yPos + 95, textPaint)
+        }
+        
+        yPos += 120f
+        canvas.drawLine(40f, yPos - 10, (pageWidth - 40).toFloat(), yPos - 10, paint)
     }
     
     document.finishPage(page)
     
-    val file = File(context.cacheDir, "catalogo_productos.pdf")
+    val file = File(context.cacheDir, "catalogo.pdf")
     try {
-        FileOutputStream(file).use { out ->
-            document.writeTo(out)
-        }
+        FileOutputStream(file).use { out -> document.writeTo(out) }
         document.close()
         
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -249,17 +255,14 @@ suspend fun launchPdfCatalogShareIntent(
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        
         withContext(Dispatchers.Main) {
             executeWhatsAppIntent(context, intent, "", targetNumber)
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
+    } catch (e: Exception) { e.printStackTrace() }
 }
 
 /**
- * Genera imágenes con la información del producto integrada y las comparte en lote.
+ * 3. CATÁLOGO VISUAL: Genera imágenes con la información del producto integrada.
  */
 suspend fun launchOverlayBatchShareIntent(
     context: android.content.Context,
@@ -268,24 +271,23 @@ suspend fun launchOverlayBatchShareIntent(
     format: DecimalFormat,
     targetNumber: String = ""
 ) = withContext(Dispatchers.IO) {
-    val tempDir = File(context.cacheDir, "share_temp").apply { 
-        deleteRecursively() 
+    val tempDir = File(context.cacheDir, "share_batch").apply { 
+        deleteRecursively()
         mkdirs() 
     }
     
     val uris = ArrayList<Uri>()
     
     products.forEach { product ->
-        val bitmap = loadScaledBitmap(context, Uri.parse(product.imageUrl), 800)
-
+        val bitmap = loadScaledBitmap(context, Uri.parse(product.imageUrl), 1000)
         if (bitmap != null) {
             val precioCup = product.precioUsd * exchangeRate
             val nombre = buildDisplayName(product.equipo, product.marca, product.modelo, product.tipo)
             val pUsd = "${format.format(product.precioUsd)} USD"
             val pCup = "${format.format(precioCup)} CUP"
             
-            val overlayBitmap = addTextOverlay(bitmap, nombre, pUsd, pCup)
-            val file = File(tempDir, "card_${product.id}_${System.currentTimeMillis()}.jpg")
+            val overlayBitmap = addTextOverlay(bitmap, nombre, pUsd, pCup, product.garantia)
+            val file = File(tempDir, "card_${product.id}.jpg")
             
             try {
                 FileOutputStream(file).use { out ->
@@ -303,8 +305,7 @@ suspend fun launchOverlayBatchShareIntent(
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             
-            // CRÍTICO: Para ACTION_SEND_MULTIPLE, ClipData debe contener todos los URIs
-            val clipData = ClipData.newRawUri("Cards", uris[0])
+            val clipData = ClipData.newRawUri("Catálogo", uris[0])
             for (i in 1 until uris.size) {
                 clipData.addItem(ClipData.Item(uris[i]))
             }
@@ -316,44 +317,45 @@ suspend fun launchOverlayBatchShareIntent(
     }
 }
 
-private fun addTextOverlay(original: Bitmap, name: String, usd: String, cup: String): Bitmap {
+private fun addTextOverlay(original: Bitmap, name: String, usd: String, cup: String, garantia: String): Bitmap {
     val width = original.width
     val height = original.height
-    // Asegurar que el bitmap sea mutable
     val result = original.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(result)
 
-    // Banner alto (20% de la imagen) para que quepa bien el texto
-    val bannerHeight = (height * 0.20).toInt().coerceAtLeast(140)
+    val bannerHeight = (height * 0.25).toInt().coerceAtLeast(180)
     val paint = Paint().apply {
-        color = Color.argb(220, 0, 0, 0) // Negro más sólido (220/255)
+        color = Color.argb(210, 0, 0, 0)
         style = Paint.Style.FILL
     }
     canvas.drawRect(0f, (height - bannerHeight).toFloat(), width.toFloat(), height.toFloat(), paint)
 
     val margin = width * 0.05f
-    
-    // Configurar pintura para el nombre
-    val namePaint = Paint().apply {
+    val textPaint = Paint().apply {
         color = Color.WHITE
-        textSize = (bannerHeight * 0.30).toFloat()
-        isAntiAlias = true
-        isFakeBoldText = true
-    }
-    
-    // Dibujar nombre
-    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.35f), namePaint)
-    
-    // Configurar pintura para el precio
-    val pricePaint = Paint().apply {
-        color = Color.YELLOW // Amarillo para que resalte el precio
         textSize = (bannerHeight * 0.25).toFloat()
         isAntiAlias = true
         isFakeBoldText = true
     }
     
-    // Dibujar precios
-    canvas.drawText("$usd / $cup", margin, (height - bannerHeight * 0.25f), pricePaint)
+    // Fila 1: Nombre
+    canvas.drawText(name, margin, (height - bannerHeight + bannerHeight * 0.3f), textPaint)
+    
+    // Fila 2: Precios
+    val pricePaint = Paint(textPaint).apply {
+        color = Color.YELLOW
+        textSize = (bannerHeight * 0.22).toFloat()
+    }
+    canvas.drawText("$usd / $cup", margin, (height - bannerHeight + bannerHeight * 0.6f), pricePaint)
+    
+    // Fila 3: Garantía
+    val detailPaint = Paint(textPaint).apply {
+        color = Color.LTGRAY
+        textSize = (bannerHeight * 0.18).toFloat()
+        isFakeBoldText = false
+    }
+    val gText = "Garantía: ${if (garantia.isNotBlank()) garantia else "No"}"
+    canvas.drawText(gText, margin, (height - bannerHeight + bannerHeight * 0.85f), detailPaint)
 
     return result
 }

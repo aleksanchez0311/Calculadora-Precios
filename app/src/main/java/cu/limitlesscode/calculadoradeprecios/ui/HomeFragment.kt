@@ -23,6 +23,7 @@ import cu.limitlesscode.calculadoradeprecios.databinding.FragmentHomeBinding
 import cu.limitlesscode.calculadoradeprecios.launchOverlayBatchShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchPdfCatalogShareIntent
 import cu.limitlesscode.calculadoradeprecios.launchShareIntent
+import cu.limitlesscode.calculadoradeprecios.launchSummaryShareIntent
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -113,6 +114,7 @@ class HomeFragment : Fragment() {
     private fun showShareOptionsDialog(products: List<Product>) {
         val options = arrayOf(
             getString(R.string.share_option_individual),
+            getString(R.string.share_option_text_catalog),
             getString(R.string.share_option_visual_batch),
             getString(R.string.share_option_pdf_catalog)
         )
@@ -123,20 +125,24 @@ class HomeFragment : Fragment() {
             .setTitle(R.string.share_dialog_title)
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> { // Individual
+                    0 -> { // 1. Individual
                         viewModel.startMultipleSharing(products)
                         val first = viewModel.consumeNextProduct()
                         if (first != null) {
                             launchShareIntent(requireContext(), first, viewModel.exchangeRate.value, format, target)
                         }
                     }
-                    1 -> { // Visual Batch (Lote con Info)
+                    1 -> { // 2. Catálogo de Texto
+                        launchSummaryShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
+                        exitSelectionMode()
+                    }
+                    2 -> { // 3. Catálogo Visual (Lote con Info)
                         viewLifecycleOwner.lifecycleScope.launch {
                             launchOverlayBatchShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
                             exitSelectionMode()
                         }
                     }
-                    2 -> { // PDF Catalog
+                    3 -> { // 4. Catálogo PDF
                         viewLifecycleOwner.lifecycleScope.launch {
                             launchPdfCatalogShareIntent(requireContext(), products, viewModel.exchangeRate.value, format, target)
                             exitSelectionMode()
